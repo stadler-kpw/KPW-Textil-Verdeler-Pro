@@ -25,29 +25,8 @@
           -webkit-print-color-adjust: exact !important;
           print-color-adjust: exact !important;
         }
-        /* Hide everything by default */
-        body > * {
-          display: none !important;
-        }
-        /* Only display the printable area */
-        #printable-area {
-          display: block !important;
-          position: absolute !important;
-          top: 0 !important;
-          left: 0 !important;
-          width: 100% !important;
-          height: 100% !important;
-          margin: 0 !important;
-          padding: 0 !important;
-          background: white !important;
-        }
-        /* Reset any transforms or shadows for print */
-        #printable-content {
-          transform: none !important;
-          box-shadow: none !important;
-          margin: 0 !important;
-          width: 100% !important;
-        }
+        /* We rely on Tailwind 'print:hidden' and 'print:block' in the React components now.
+           This allows more flexibility than hiding everything globally here. */
       }
     </style>
   <script type="importmap">

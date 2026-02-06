@@ -64,21 +64,11 @@ const PrintableQuote = ({ state, totalPrice, totalQty, hasBasePrice, imageDimens
                                                     left: `${logo.x}%`,
                                                     top: `${logo.y}%`,
                                                     transform: `rotate(${logo.rotation}deg)`,
-                                                    // For scale, we need a reference. In the editor, scale 1 = 150px.
-                                                    // In Print, we need to be relative to the image size.
-                                                    // Since logo.scale is relative to '150px' base size in editor,
-                                                    // we can just render pixel width/height if we knew the print rendering width.
-                                                    // BUT: `width` here in CSS is relative to parent if %, or pixels.
-                                                    // Simpler approach: Use a fixed width scaled by the container width?
-                                                    // Let's approximate: baseSize (150) is roughly 20-25% of a typical 600px image.
-                                                    // We can define width in % to be truly responsive.
-                                                    // Let's assume 150px base is 150/600 = 25% of width?
-                                                    // This is tricky without knowing editor pixel dims.
-                                                    // Let's use a fixed pixel size for print but scaled by the PDF scale?
-                                                    // No, "w-full" container in PDF is about 80mm (~300px).
-                                                    // Editor image is maybe 600px.
-                                                    // So we should scale the logo by 0.5 roughly.
-                                                    width: `${(150 * logo.scale / dims.width) * 100}%`, // Calculate width as % of image width using natural dims
+                                                    // Scaling for Print:
+                                                    // Since we don't know exact pixels on paper, but we know the 'container' is 100% width of the column.
+                                                    // The logo.scale is based on a 150px base relative to the SCREEN viewer.
+                                                    // To make it look consistent, we calculated width as percentage of the image width.
+                                                    width: `${(150 * logo.scale / dims.width) * 100}%`,
                                                     aspectRatio: '1/1', // Square logos
                                                     position: 'absolute',
                                                     zIndex: 10
@@ -684,243 +674,244 @@ function App() {
   const { totalQty, totalPrice, hasBasePrice, isMoqValid } = getEstimatedTotal();
 
   return (
-    <div className="h-screen flex flex-col md:flex-row bg-white overflow-hidden print:hidden">
+    <>
       {renderShareModal()}
-
-      <div className="flex-1 bg-slate-100 relative flex flex-col h-full overflow-hidden">
-        
-        <div className="absolute top-4 left-4 z-30 flex gap-2">
-            <button onClick={handleUndo} disabled={history.length === 0} className="bg-white p-2 rounded shadow-md text-slate-700 hover:text-blue-600 disabled:opacity-50 disabled:cursor-not-allowed">
-                <Undo2 size={20} />
-            </button>
-            <button onClick={handleRedo} disabled={future.length === 0} className="bg-white p-2 rounded shadow-md text-slate-700 hover:text-blue-600 disabled:opacity-50 disabled:cursor-not-allowed">
-                <Redo2 size={20} />
-            </button>
-        </div>
-
-        <div className="absolute top-4 right-4 z-30 flex flex-col gap-2">
-            <button onClick={zoomIn} disabled={canvasZoom >= maxZoom} className="bg-white p-2 rounded shadow-md text-slate-700 hover:text-blue-600 disabled:opacity-50">
-                <ZoomIn size={20} />
-            </button>
-            <button onClick={zoomReset} className="bg-white p-2 rounded shadow-md text-slate-700 hover:text-blue-600">
-                <Maximize size={20} />
-            </button>
-            <button onClick={zoomOut} disabled={canvasZoom <= minZoom} className="bg-white p-2 rounded shadow-md text-slate-700 hover:text-blue-600 disabled:opacity-50">
-                <ZoomOut size={20} />
-            </button>
-            <div className="bg-white/80 px-2 py-1 rounded text-xs text-center font-medium text-slate-500 backdrop-blur">
-                {Math.round(canvasZoom * 100)}%
-            </div>
-        </div>
-        
-        <div className="flex-1 flex items-center justify-center p-8 overflow-hidden bg-slate-100 relative" 
-             onClick={() => setState(prev => ({ ...prev, selectedLogoId: null }))}>
+      <div className="h-screen flex flex-col md:flex-row bg-white overflow-hidden print:hidden">
+        <div className="flex-1 bg-slate-100 relative flex flex-col h-full overflow-hidden">
           
-          <div 
-             ref={canvasRef}
-             className="relative shadow-2xl bg-white transition-transform duration-100 ease-out origin-center"
-             style={{ 
-                 transform: `scale(${canvasZoom})`,
-             }}
-          >
-            {activeImageUrl ? (
-              <img 
-                src={activeImageUrl} 
-                className="max-h-[75vh] max-w-[85vw] w-auto h-auto block select-none pointer-events-none" 
-                alt="Produkt" 
-              />
-            ) : (
-                <div className="w-[300px] h-[400px] flex items-center justify-center text-slate-400 bg-slate-50">Kein Bild geladen</div>
-            )}
+          <div className="absolute top-4 left-4 z-30 flex gap-2">
+              <button onClick={handleUndo} disabled={history.length === 0} className="bg-white p-2 rounded shadow-md text-slate-700 hover:text-blue-600 disabled:opacity-50 disabled:cursor-not-allowed">
+                  <Undo2 size={20} />
+              </button>
+              <button onClick={handleRedo} disabled={future.length === 0} className="bg-white p-2 rounded shadow-md text-slate-700 hover:text-blue-600 disabled:opacity-50 disabled:cursor-not-allowed">
+                  <Redo2 size={20} />
+              </button>
+          </div>
 
-            <div className="absolute inset-0 top-0 left-0 w-full h-full">
-                {currentLogos.map(logo => (
-                <LogoDraggable 
-                    key={logo.id}
-                    id={logo.id}
-                    imageSrc={logo.url}
-                    isSelected={state.selectedLogoId === logo.id}
-                    onSelect={() => setState(prev => ({ ...prev, selectedLogoId: logo.id }))}
-                    xPercent={logo.x}
-                    yPercent={logo.y}
-                    initialScale={logo.scale}
-                    initialRotation={logo.rotation}
-                    canvasZoom={canvasZoom}
-                    onUpdate={handleLogoUpdate}
+          <div className="absolute top-4 right-4 z-30 flex flex-col gap-2">
+              <button onClick={zoomIn} disabled={canvasZoom >= maxZoom} className="bg-white p-2 rounded shadow-md text-slate-700 hover:text-blue-600 disabled:opacity-50">
+                  <ZoomIn size={20} />
+              </button>
+              <button onClick={zoomReset} className="bg-white p-2 rounded shadow-md text-slate-700 hover:text-blue-600">
+                  <Maximize size={20} />
+              </button>
+              <button onClick={zoomOut} disabled={canvasZoom <= minZoom} className="bg-white p-2 rounded shadow-md text-slate-700 hover:text-blue-600 disabled:opacity-50">
+                  <ZoomOut size={20} />
+              </button>
+              <div className="bg-white/80 px-2 py-1 rounded text-xs text-center font-medium text-slate-500 backdrop-blur">
+                  {Math.round(canvasZoom * 100)}%
+              </div>
+          </div>
+          
+          <div className="flex-1 flex items-center justify-center p-8 overflow-hidden bg-slate-100 relative" 
+              onClick={() => setState(prev => ({ ...prev, selectedLogoId: null }))}>
+            
+            <div 
+              ref={canvasRef}
+              className="relative shadow-2xl bg-white transition-transform duration-100 ease-out origin-center"
+              style={{ 
+                  transform: `scale(${canvasZoom})`,
+              }}
+            >
+              {activeImageUrl ? (
+                <img 
+                  src={activeImageUrl} 
+                  className="max-h-[75vh] max-w-[85vw] w-auto h-auto block select-none pointer-events-none" 
+                  alt="Produkt" 
                 />
-                ))}
+              ) : (
+                  <div className="w-[300px] h-[400px] flex items-center justify-center text-slate-400 bg-slate-50">Kein Bild geladen</div>
+              )}
+
+              <div className="absolute inset-0 top-0 left-0 w-full h-full">
+                  {currentLogos.map(logo => (
+                  <LogoDraggable 
+                      key={logo.id}
+                      id={logo.id}
+                      imageSrc={logo.url}
+                      isSelected={state.selectedLogoId === logo.id}
+                      onSelect={() => setState(prev => ({ ...prev, selectedLogoId: logo.id }))}
+                      xPercent={logo.x}
+                      yPercent={logo.y}
+                      initialScale={logo.scale}
+                      initialRotation={logo.rotation}
+                      canvasZoom={canvasZoom}
+                      onUpdate={handleLogoUpdate}
+                  />
+                  ))}
+              </div>
             </div>
           </div>
-        </div>
 
-        {state.productImages.length > 1 && (
-            <div className="h-24 bg-white border-t border-slate-200 p-2 flex gap-2 overflow-x-auto items-center justify-center shrink-0 z-20">
-                {state.productImages.map((img, idx) => (
-                    <button 
-                        key={idx}
-                        onClick={() => setState(prev => ({ ...prev, activeImageIndex: idx, selectedLogoId: null }))}
-                        className={`h-20 w-20 border-2 rounded-lg overflow-hidden transition-all flex-shrink-0 ${state.activeImageIndex === idx ? 'border-blue-600 ring-2 ring-blue-100' : 'border-slate-100 hover:border-slate-300'}`}
-                    >
-                        <img src={img} className="w-full h-full object-cover" alt={`Ansicht ${idx+1}`} />
-                    </button>
-                ))}
-            </div>
-        )}
-      </div>
-
-      <div className="w-full md:w-[400px] bg-white border-l border-slate-200 flex flex-col h-[50vh] md:h-auto overflow-y-auto relative z-40 shadow-xl">
-        <div className="p-6 space-y-6 pb-24">
-          
-          <div className="flex justify-between items-start">
-             <div>
-                <h2 className="text-xl font-bold text-slate-800">Konfiguration</h2>
-                <p className="text-slate-500 text-sm">Ansicht {state.activeImageIndex + 1} von {state.productImages.length}</p>
-             </div>
-          </div>
-
-          <button
-             onClick={() => !maxLogosReached && logoInputRef.current?.click()}
-             disabled={maxLogosReached}
-             className={`w-full py-3 border-2 border-dashed rounded-lg transition-colors flex items-center justify-center gap-2 font-medium ${maxLogosReached ? 'border-slate-200 bg-slate-50 text-slate-400 cursor-not-allowed' : 'border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100'}`}
-           >
-             <Upload size={18} /> 
-             {maxLogosReached ? 'Maximal 5 Logos erreicht' : 'Logo auf diese Ansicht hinzufügen'}
-             <span className="text-xs ml-1 opacity-70">({state.logos.length}/{MAX_LOGOS})</span>
-           </button>
-           <input type="file" ref={logoInputRef} className="hidden" accept="image/*" onChange={handleLogoUpload} />
-
-          {selectedLogo ? (
-            <div className="bg-slate-50 p-4 rounded-xl border border-blue-100 ring-1 ring-blue-100 shadow-sm">
-                <div className="flex justify-between items-start mb-4">
-                    <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-                        Aktuelles Logo bearbeiten
-                    </h3>
-                    <button onClick={handleDeleteLogo} className="text-red-400 hover:text-red-600 p-1 hover:bg-red-50 rounded"><Trash2 size={16}/></button>
-                </div>
-
-                <div className="space-y-4">
-                    <div>
-                        <label className="block text-xs font-medium text-slate-500 mb-1.5">Veredelungsart für dieses Logo</label>
-                        <select 
-                            value={selectedLogo.refinement}
-                            onChange={(e) => handleRefinementChange(e.target.value as RefinementType)}
-                            className="w-full bg-white border border-slate-200 text-slate-800 py-2 px-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium"
-                        >
-                            {Object.values(RefinementType).map(t => <option key={t} value={t}>{t}</option>)}
-                        </select>
-                        {selectedLogo.refinement === RefinementType.STICK && (
-                             <p className="text-[10px] text-amber-600 mt-1 flex items-center gap-1">
-                                <AlertCircle size={10} /> Mindestbestellmenge bei Stick: 5 Stk.
-                             </p>
-                        )}
-                    </div>
-                </div>
-            </div>
-          ) : (
-            <div className="text-center py-8 text-slate-400 border rounded-xl border-slate-100 bg-slate-50/50">
-                <p className="text-sm">Wähle ein Logo auf dem Produkt aus,<br/>um die Veredelung einzustellen.</p>
-            </div>
-          )}
-
-          <hr className="border-slate-100" />
-
-          <div>
-               <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wide mb-3">Größen & Mengen</h3>
-               
-               <div className="flex items-center gap-3 mb-4 p-3 bg-slate-50 border border-slate-200 rounded-lg">
-                    <div className="relative flex items-center">
-                        <input 
-                            type="checkbox"
-                            id="unsure-sizes"
-                            checked={state.isUnsureAboutSizes}
-                            onChange={(e) => setState(prev => ({ ...prev, isUnsureAboutSizes: e.target.checked }))}
-                            className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500 cursor-pointer"
-                        />
-                    </div>
-                    <label htmlFor="unsure-sizes" className="text-sm font-medium text-slate-700 cursor-pointer select-none">
-                        Ich bin mir unsicher bzgl. den Größen
-                    </label>
-               </div>
-
-               {state.isUnsureAboutSizes ? (
-                    <div className="space-y-1 animation-fade-in">
-                        <label className="text-xs font-medium text-slate-500">Erwartete Gesamtstückzahl</label>
-                        <input
-                            type="number"
-                            min="1"
-                            value={state.totalEstimatedQuantity || ''}
-                            onChange={(e) => handleTotalQuantityChange(e.target.value)}
-                            className="w-full p-2.5 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-slate-800 font-medium"
-                            placeholder="z.B. 50"
-                        />
-                    </div>
-               ) : (
-                   <div className="grid grid-cols-3 gap-2">
-                     {state.availableSizes.map(size => (
-                       <div key={size} className="relative">
-                         <label className="absolute -top-2 left-2 bg-white px-1 text-[10px] text-slate-400 font-medium">{size}</label>
-                         <input
-                           type="number"
-                           min="0"
-                           value={state.quantities[size] || ''}
-                           onChange={(e) => handleQuantityChange(size, e.target.value)}
-                           placeholder="0"
-                           className="w-full text-center py-2 border border-slate-200 rounded-md focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-sm font-medium text-slate-700 placeholder-slate-300"
-                         />
-                       </div>
-                     ))}
-                   </div>
-               )}
-            </div>
-        </div>
-
-        <div className="mt-auto border-t border-slate-100 p-6 bg-white sticky bottom-0 z-20 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
-          <div className="flex justify-between items-center mb-4 text-sm text-slate-600">
-             <span>Gesamtmenge:</span>
-             <div className="text-right">
-                <div className="font-bold text-slate-900">
-                    {totalQty} Stk.
-                    {state.isUnsureAboutSizes && <span className="text-xs font-normal text-slate-400 ml-1">(Geschätzt)</span>}
-                </div>
-                {hasBasePrice && totalQty > 0 && (
-                    <div className="text-blue-600 font-bold text-lg">
-                        {totalPrice.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
-                        <span className="text-[10px] text-slate-400 font-normal ml-1 block leading-none">geschätzt</span>
-                    </div>
-                )}
-             </div>
-          </div>
-          
-          {!isMoqValid && (
-              <div className="mb-4 bg-amber-50 border border-amber-200 rounded-lg p-3 flex gap-2 items-start animate-in fade-in">
-                  <AlertTriangle size={18} className="text-amber-600 mt-0.5 shrink-0" />
-                  <div className="text-xs text-amber-800">
-                      <strong>Mindestmenge nicht erreicht</strong>
-                      <p>Für "Stick" ist eine Abnahme von mindestens {MIN_STICK_QTY} Stück erforderlich.</p>
-                  </div>
+          {state.productImages.length > 1 && (
+              <div className="h-24 bg-white border-t border-slate-200 p-2 flex gap-2 overflow-x-auto items-center justify-center shrink-0 z-20">
+                  {state.productImages.map((img, idx) => (
+                      <button 
+                          key={idx}
+                          onClick={() => setState(prev => ({ ...prev, activeImageIndex: idx, selectedLogoId: null }))}
+                          className={`h-20 w-20 border-2 rounded-lg overflow-hidden transition-all flex-shrink-0 ${state.activeImageIndex === idx ? 'border-blue-600 ring-2 ring-blue-100' : 'border-slate-100 hover:border-slate-300'}`}
+                      >
+                          <img src={img} className="w-full h-full object-cover" alt={`Ansicht ${idx+1}`} />
+                      </button>
+                  ))}
               </div>
           )}
+        </div>
 
-          <div className="flex gap-2">
-              <button
-                onClick={handleOpenShare}
-                className="bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 p-3.5 rounded-xl transition-colors flex items-center justify-center shadow-sm"
-                title="Konfiguration teilen / Übersicht"
-              >
-                  <Share2 size={20} />
-              </button>
-              <button 
-                onClick={() => setState(prev => ({ ...prev, step: 'checkout' }))}
-                disabled={!isMoqValid}
-                className={`flex-1 py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 transition-all active:scale-[0.98] ${isMoqValid ? 'bg-slate-900 hover:bg-slate-800 text-white' : 'bg-slate-200 text-slate-400 cursor-not-allowed'}`}
-              >
-                Weiter zur Anfrage <ArrowRight size={18} />
-              </button>
+        <div className="w-full md:w-[400px] bg-white border-l border-slate-200 flex flex-col h-[50vh] md:h-auto overflow-y-auto relative z-40 shadow-xl">
+          <div className="p-6 space-y-6 pb-24">
+            
+            <div className="flex justify-between items-start">
+              <div>
+                  <h2 className="text-xl font-bold text-slate-800">Konfiguration</h2>
+                  <p className="text-slate-500 text-sm">Ansicht {state.activeImageIndex + 1} von {state.productImages.length}</p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => !maxLogosReached && logoInputRef.current?.click()}
+              disabled={maxLogosReached}
+              className={`w-full py-3 border-2 border-dashed rounded-lg transition-colors flex items-center justify-center gap-2 font-medium ${maxLogosReached ? 'border-slate-200 bg-slate-50 text-slate-400 cursor-not-allowed' : 'border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100'}`}
+            >
+              <Upload size={18} /> 
+              {maxLogosReached ? 'Maximal 5 Logos erreicht' : 'Logo auf diese Ansicht hinzufügen'}
+              <span className="text-xs ml-1 opacity-70">({state.logos.length}/{MAX_LOGOS})</span>
+            </button>
+            <input type="file" ref={logoInputRef} className="hidden" accept="image/*" onChange={handleLogoUpload} />
+
+            {selectedLogo ? (
+              <div className="bg-slate-50 p-4 rounded-xl border border-blue-100 ring-1 ring-blue-100 shadow-sm">
+                  <div className="flex justify-between items-start mb-4">
+                      <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                          Aktuelles Logo bearbeiten
+                      </h3>
+                      <button onClick={handleDeleteLogo} className="text-red-400 hover:text-red-600 p-1 hover:bg-red-50 rounded"><Trash2 size={16}/></button>
+                  </div>
+
+                  <div className="space-y-4">
+                      <div>
+                          <label className="block text-xs font-medium text-slate-500 mb-1.5">Veredelungsart für dieses Logo</label>
+                          <select 
+                              value={selectedLogo.refinement}
+                              onChange={(e) => handleRefinementChange(e.target.value as RefinementType)}
+                              className="w-full bg-white border border-slate-200 text-slate-800 py-2 px-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium"
+                          >
+                              {Object.values(RefinementType).map(t => <option key={t} value={t}>{t}</option>)}
+                          </select>
+                          {selectedLogo.refinement === RefinementType.STICK && (
+                              <p className="text-[10px] text-amber-600 mt-1 flex items-center gap-1">
+                                  <AlertCircle size={10} /> Mindestbestellmenge bei Stick: 5 Stk.
+                              </p>
+                          )}
+                      </div>
+                  </div>
+              </div>
+            ) : (
+              <div className="text-center py-8 text-slate-400 border rounded-xl border-slate-100 bg-slate-50/50">
+                  <p className="text-sm">Wähle ein Logo auf dem Produkt aus,<br/>um die Veredelung einzustellen.</p>
+              </div>
+            )}
+
+            <hr className="border-slate-100" />
+
+            <div>
+                <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wide mb-3">Größen & Mengen</h3>
+                
+                <div className="flex items-center gap-3 mb-4 p-3 bg-slate-50 border border-slate-200 rounded-lg">
+                      <div className="relative flex items-center">
+                          <input 
+                              type="checkbox"
+                              id="unsure-sizes"
+                              checked={state.isUnsureAboutSizes}
+                              onChange={(e) => setState(prev => ({ ...prev, isUnsureAboutSizes: e.target.checked }))}
+                              className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500 cursor-pointer"
+                          />
+                      </div>
+                      <label htmlFor="unsure-sizes" className="text-sm font-medium text-slate-700 cursor-pointer select-none">
+                          Ich bin mir unsicher bzgl. den Größen
+                      </label>
+                </div>
+
+                {state.isUnsureAboutSizes ? (
+                      <div className="space-y-1 animation-fade-in">
+                          <label className="text-xs font-medium text-slate-500">Erwartete Gesamtstückzahl</label>
+                          <input
+                              type="number"
+                              min="1"
+                              value={state.totalEstimatedQuantity || ''}
+                              onChange={(e) => handleTotalQuantityChange(e.target.value)}
+                              className="w-full p-2.5 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-slate-800 font-medium"
+                              placeholder="z.B. 50"
+                          />
+                      </div>
+                ) : (
+                    <div className="grid grid-cols-3 gap-2">
+                      {state.availableSizes.map(size => (
+                        <div key={size} className="relative">
+                          <label className="absolute -top-2 left-2 bg-white px-1 text-[10px] text-slate-400 font-medium">{size}</label>
+                          <input
+                            type="number"
+                            min="0"
+                            value={state.quantities[size] || ''}
+                            onChange={(e) => handleQuantityChange(size, e.target.value)}
+                            placeholder="0"
+                            className="w-full text-center py-2 border border-slate-200 rounded-md focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-sm font-medium text-slate-700 placeholder-slate-300"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                )}
+              </div>
+          </div>
+
+          <div className="mt-auto border-t border-slate-100 p-6 bg-white sticky bottom-0 z-20 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+            <div className="flex justify-between items-center mb-4 text-sm text-slate-600">
+              <span>Gesamtmenge:</span>
+              <div className="text-right">
+                  <div className="font-bold text-slate-900">
+                      {totalQty} Stk.
+                      {state.isUnsureAboutSizes && <span className="text-xs font-normal text-slate-400 ml-1">(Geschätzt)</span>}
+                  </div>
+                  {hasBasePrice && totalQty > 0 && (
+                      <div className="text-blue-600 font-bold text-lg">
+                          {totalPrice.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
+                          <span className="text-[10px] text-slate-400 font-normal ml-1 block leading-none">geschätzt</span>
+                      </div>
+                  )}
+              </div>
+            </div>
+            
+            {!isMoqValid && (
+                <div className="mb-4 bg-amber-50 border border-amber-200 rounded-lg p-3 flex gap-2 items-start animate-in fade-in">
+                    <AlertTriangle size={18} className="text-amber-600 mt-0.5 shrink-0" />
+                    <div className="text-xs text-amber-800">
+                        <strong>Mindestmenge nicht erreicht</strong>
+                        <p>Für "Stick" ist eine Abnahme von mindestens {MIN_STICK_QTY} Stück erforderlich.</p>
+                    </div>
+                </div>
+            )}
+
+            <div className="flex gap-2">
+                <button
+                  onClick={handleOpenShare}
+                  className="bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 p-3.5 rounded-xl transition-colors flex items-center justify-center shadow-sm"
+                  title="Konfiguration teilen / Übersicht"
+                >
+                    <Share2 size={20} />
+                </button>
+                <button 
+                  onClick={() => setState(prev => ({ ...prev, step: 'checkout' }))}
+                  disabled={!isMoqValid}
+                  className={`flex-1 py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 transition-all active:scale-[0.98] ${isMoqValid ? 'bg-slate-900 hover:bg-slate-800 text-white' : 'bg-slate-200 text-slate-400 cursor-not-allowed'}`}
+                >
+                  Weiter zur Anfrage <ArrowRight size={18} />
+                </button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 
