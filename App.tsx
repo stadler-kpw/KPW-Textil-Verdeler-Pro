@@ -297,9 +297,9 @@ function App() {
   // --- Price Logic ---
   const getEstimatedTotal = () => {
     // 1. Calculate Quantity
-    const totalQty = state.isUnsureAboutSizes 
+    const totalQty = (state.isUnsureAboutSizes 
         ? state.totalEstimatedQuantity 
-        : (Object.values(state.quantities) as number[]).reduce((a, b) => a + b, 0);
+        : (Object.values(state.quantities) as number[]).reduce((a, b) => a + b, 0)) as number;
     
     // 2. Calculate Refinement Costs per Item
     // Stick = +5, Druck = +3
