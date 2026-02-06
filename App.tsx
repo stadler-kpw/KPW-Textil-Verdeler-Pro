@@ -1,8 +1,171 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Upload, Link as LinkIcon, ShoppingBag, ArrowRight, Image as ImageIcon, Loader2, Trash2, Undo2, Redo2, ZoomIn, ZoomOut, Maximize, Share2, Copy, X, Check, ImageDown, Euro, AlertTriangle, AlertCircle } from 'lucide-react';
+import { Upload, Link as LinkIcon, ShoppingBag, ArrowRight, Image as ImageIcon, Loader2, Trash2, Undo2, Redo2, ZoomIn, ZoomOut, Maximize, Share2, Copy, X, Check, ImageDown, Euro, AlertTriangle, AlertCircle, Printer, FileText } from 'lucide-react';
 import { extractShopifyImage } from './services/imageUtils'; // Still imported, though we use local parsing mainly now
 import { LogoDraggable } from './components/LogoDraggable';
 import { DEFAULT_SIZES, RefinementType, AppState, ContactFormData, LogoObject } from './types';
+
+// --- Sub-Component: Printable Quote (A4 Layout) ---
+const PrintableQuote = ({ state, totalPrice, totalQty, hasBasePrice, imageDimensions }: { 
+    state: AppState, 
+    totalPrice: number, 
+    totalQty: number, 
+    hasBasePrice: boolean,
+    imageDimensions: Record<number, {width: number, height: number}>
+}) => {
+    const dateStr = new Date().toLocaleDateString('de-DE', { year: 'numeric', month: '2-digit', day: '2-digit' });
+    const viewsWithLogosIndices = Array.from(new Set(state.logos.map(l => l.viewIndex))).sort();
+    const viewsToShow = viewsWithLogosIndices.length > 0 ? viewsWithLogosIndices : [state.activeImageIndex];
+
+    return (
+        <div id="printable-content" className="bg-white w-[210mm] min-h-[297mm] p-[15mm] text-slate-900 relative">
+            {/* Header */}
+            <div className="flex justify-between items-start border-b-2 border-slate-900 pb-6 mb-8">
+                <div>
+                    <h1 className="text-3xl font-bold uppercase tracking-tight text-slate-900">Konfiguration</h1>
+                    <p className="text-slate-500 font-medium mt-1">Veredelungs-Zusammenfassung</p>
+                </div>
+                <div className="text-right">
+                    <p className="text-sm font-bold text-slate-400 uppercase">Datum</p>
+                    <p className="text-lg font-bold">{dateStr}</p>
+                </div>
+            </div>
+
+            {/* Product & Visuals Grid */}
+            <div className="mb-8">
+                <h3 className="text-sm font-bold uppercase text-slate-500 mb-4 border-b border-slate-200 pb-2">Visuelle Vorschau</h3>
+                
+                <div className="grid grid-cols-2 gap-8">
+                    {viewsToShow.map(viewIdx => {
+                        const viewLogos = state.logos.filter(l => l.viewIndex === viewIdx);
+                        const viewImage = state.productImages[viewIdx];
+                        const dims = imageDimensions[viewIdx] || { width: 1000, height: 1000 };
+                        // Calculate aspect ratio for the container
+                        const aspectRatio = dims.width / dims.height;
+
+                        return (
+                            <div key={viewIdx} className="flex flex-col gap-2 page-break-inside-avoid">
+                                <span className="text-xs font-bold text-slate-400 uppercase">Ansicht {viewIdx + 1}</span>
+                                {/* Container that matches the aspect ratio of the image exactly */}
+                                <div 
+                                    className="relative w-full bg-slate-50 border border-slate-200 rounded overflow-hidden"
+                                    style={{ aspectRatio: `${aspectRatio}` }}
+                                >
+                                    <img 
+                                        src={viewImage} 
+                                        className="w-full h-full block object-contain" 
+                                        alt="Preview" 
+                                    />
+                                    {/* Overlay Layer for Logos */}
+                                    <div className="absolute inset-0 top-0 left-0 w-full h-full">
+                                        {viewLogos.map(logo => (
+                                            <div key={logo.id + 'print'} 
+                                                style={{
+                                                    // Position using Percentages
+                                                    left: `${logo.x}%`,
+                                                    top: `${logo.y}%`,
+                                                    transform: `rotate(${logo.rotation}deg)`,
+                                                    // For scale, we need a reference. In the editor, scale 1 = 150px.
+                                                    // In Print, we need to be relative to the image size.
+                                                    // Since logo.scale is relative to '150px' base size in editor,
+                                                    // we can just render pixel width/height if we knew the print rendering width.
+                                                    // BUT: `width` here in CSS is relative to parent if %, or pixels.
+                                                    // Simpler approach: Use a fixed width scaled by the container width?
+                                                    // Let's approximate: baseSize (150) is roughly 20-25% of a typical 600px image.
+                                                    // We can define width in % to be truly responsive.
+                                                    // Let's assume 150px base is 150/600 = 25% of width?
+                                                    // This is tricky without knowing editor pixel dims.
+                                                    // Let's use a fixed pixel size for print but scaled by the PDF scale?
+                                                    // No, "w-full" container in PDF is about 80mm (~300px).
+                                                    // Editor image is maybe 600px.
+                                                    // So we should scale the logo by 0.5 roughly.
+                                                    width: `${(150 * logo.scale / dims.width) * 100}%`, // Calculate width as % of image width using natural dims
+                                                    aspectRatio: '1/1', // Square logos
+                                                    position: 'absolute',
+                                                    zIndex: 10
+                                                }}>
+                                                <img src={logo.url} className="w-full h-full object-contain" alt="logo" />
+                                                <div className="absolute -top-4 left-0 bg-white border border-slate-900 text-slate-900 text-[10px] leading-none font-bold px-1.5 py-0.5 rounded shadow-sm whitespace-nowrap z-50">
+                                                    {logo.refinement}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        )
+                    })}
+                </div>
+            </div>
+
+            {/* Details Table */}
+            <div className="mb-8 page-break-inside-avoid">
+                <h3 className="text-sm font-bold uppercase text-slate-500 mb-4 border-b border-slate-200 pb-2">Details & Mengen</h3>
+                
+                <div className="bg-slate-50 rounded-lg p-6 border border-slate-200">
+                     <div className="grid grid-cols-2 gap-8">
+                         <div>
+                            <p className="text-xs font-bold text-slate-400 uppercase mb-2">Größenaufteilung</p>
+                            {state.isUnsureAboutSizes ? (
+                                <p className="font-mono text-slate-700">Größen noch unklar / gemischt</p>
+                            ) : (
+                                <ul className="space-y-1 font-mono text-sm">
+                                    {Object.entries(state.quantities).filter(([_, q]) => q > 0).map(([size, qty]) => (
+                                        <li key={size} className="flex justify-between border-b border-slate-200 last:border-0 py-1">
+                                            <span>{size}</span>
+                                            <span className="font-bold">{qty}</span>
+                                        </li>
+                                    ))}
+                                    {Object.values(state.quantities).every(q => q === 0) && <li>Keine Mengen gewählt</li>}
+                                </ul>
+                            )}
+                         </div>
+                         <div>
+                            <p className="text-xs font-bold text-slate-400 uppercase mb-2">Veredelungen</p>
+                            <ul className="space-y-1 font-mono text-sm">
+                                {state.logos.map((logo, idx) => (
+                                    <li key={logo.id} className="flex justify-between border-b border-slate-200 last:border-0 py-1">
+                                        <span>Logo {idx + 1} (Ansicht {logo.viewIndex + 1})</span>
+                                        <span className="font-bold">{logo.refinement}</span>
+                                    </li>
+                                ))}
+                                {state.logos.length === 0 && <li>Keine Logos platziert</li>}
+                            </ul>
+                         </div>
+                     </div>
+                </div>
+            </div>
+
+            {/* Total Section */}
+            <div className="mt-auto border-t-2 border-slate-900 pt-6 page-break-inside-avoid">
+                <div className="flex justify-end">
+                    <div className="w-1/2 space-y-3">
+                        <div className="flex justify-between text-sm">
+                            <span className="text-slate-600">Gesamtmenge Artikel</span>
+                            <span className="font-bold">{totalQty} Stk.</span>
+                        </div>
+                        {hasBasePrice && (
+                            <div className="flex justify-between items-end pt-2 border-t border-slate-200">
+                                <span className="text-slate-900 font-bold">Geschätzter Gesamtpreis</span>
+                                <span className="text-2xl font-bold text-slate-900">
+                                    {totalPrice.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
+                                </span>
+                            </div>
+                        )}
+                        {!hasBasePrice && (
+                            <div className="text-right text-sm text-slate-500 italic mt-2">
+                                Preis auf Anfrage
+                            </div>
+                        )}
+                    </div>
+                </div>
+                <div className="mt-8 text-[10px] text-slate-400 text-center uppercase tracking-wider">
+                     Dieses Dokument wurde automatisch generiert. Alle Preise sind unverbindliche Schätzungen zzgl. MwSt.
+                </div>
+            </div>
+        </div>
+    );
+};
+
 
 function App() {
   // --- Constants ---
@@ -23,6 +186,20 @@ function App() {
     basePrice: null,
   });
 
+  // Keep track of natural dimensions for accurate export/print positioning
+  const [imageDimensions, setImageDimensions] = useState<Record<number, {width: number, height: number}>>({});
+
+  useEffect(() => {
+    // Load images to get natural dimensions
+    state.productImages.forEach((src, idx) => {
+        const img = new Image();
+        img.src = src;
+        img.onload = () => {
+            setImageDimensions(prev => ({ ...prev, [idx]: { width: img.naturalWidth, height: img.naturalHeight } }));
+        };
+    });
+  }, [state.productImages]);
+
   // History State
   const [history, setHistory] = useState<AppState[]>([]);
   const [future, setFuture] = useState<AppState[]>([]);
@@ -32,14 +209,10 @@ function App() {
   const minZoom = 0.5;
   const maxZoom = 3.0;
   
-  // We need to capture the real rendered dimensions of the main canvas to replicate it perfectly in the modal
   const canvasRef = useRef<HTMLDivElement>(null);
-  const [snapshotDimensions, setSnapshotDimensions] = useState<{width: number, height: number} | null>(null);
 
   // Share Modal State
   const [showShareModal, setShowShareModal] = useState(false);
-  const [copiedText, setCopiedText] = useState(false);
-  const [copyingImageId, setCopyingImageId] = useState<number | null>(null); // ViewIndex currently being copied
 
   const [shopifyUrl, setShopifyUrl] = useState('');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -51,7 +224,6 @@ function App() {
   const parseDataFromUrl = (urlString: string) => {
       let params: URLSearchParams;
       
-      // Handle full URL or just query string
       if (urlString.startsWith('?')) {
           params = new URLSearchParams(urlString);
       } else if (urlString.includes('?')) {
@@ -59,18 +231,13 @@ function App() {
              const u = new URL(urlString);
              params = u.searchParams;
           } catch (e) {
-             // Fallback if not a valid full URL but has ?
              const split = urlString.split('?');
              params = new URLSearchParams(split[1]);
           }
       } else {
-          // If no '?', maybe the user just pasted the whole thing as params or it's a plain URL
-          // If plain URL without params, new URLSearchParams(url) usually doesn't do what we want for 'images' key
-          // We assume no params found unless strictly in query string
           return { images: [], sizes: null, productRef: null, price: null };
       }
 
-      // 1. Product Reference
       let productRef = null;
       const productParam = params.get('product');
       if (productParam) {
@@ -81,7 +248,6 @@ function App() {
           productRef = clean;
       }
 
-      // 2. Sizes
       const sizesParam = params.get('sizes');
       let sizes = null;
       if (sizesParam) {
@@ -89,7 +255,6 @@ function App() {
           if (parsed.length > 0) sizes = parsed;
       }
 
-      // 3. Images
       const imagesParam = params.get('images');
       let images: string[] = [];
       if (imagesParam) {
@@ -105,12 +270,10 @@ function App() {
             }).filter(Boolean);
       }
 
-      // 4. Price
       const priceParam = params.get('price');
       let price: number | null = null;
       if (priceParam) {
           try {
-              // Handle potential commas if user manually types it, though URL standard is dot
               price = parseFloat(priceParam.replace(',', '.'));
           } catch(e) {}
       }
@@ -145,9 +308,7 @@ function App() {
         }
   };
 
-  // --- Initialization: URL Params Parsing ---
   useEffect(() => {
-    // Check window location on mount
     const { images, sizes, productRef, price } = parseDataFromUrl(window.location.search);
     if (images.length > 0) {
         applyConfig(images, sizes, productRef, price);
@@ -185,17 +346,11 @@ function App() {
 
   const handleUrlImport = () => {
       if (!shopifyUrl) return;
-      // Try to parse the input string as a URL with params
       const { images, sizes, productRef, price } = parseDataFromUrl(shopifyUrl);
-      
-      // If found images via params, good.
       if (images.length > 0) {
           applyConfig(images, sizes, productRef || shopifyUrl, price);
       } else {
-          // If no params found, user might have pasted a direct image link? 
-          // Check if it looks like an image
           if (shopifyUrl.match(/\.(jpeg|jpg|gif|png|webp)$/i) || shopifyUrl.includes('cdn/shop')) {
-               // Treat as single image
                applyConfig([shopifyUrl], null, shopifyUrl, null);
           } else {
                setErrorMsg("Die URL enthält keine 'images' Parameter und ist kein direktes Bild.");
@@ -212,7 +367,7 @@ function App() {
           productImages: [url], 
           activeImageIndex: 0,
           step: 'config',
-          basePrice: null // Reset price for manual upload
+          basePrice: null 
       }));
     }
   };
@@ -226,14 +381,14 @@ function App() {
           alert(`Maximal ${MAX_LOGOS} Logos erlaubt.`);
           return;
       }
-      pushToHistory(); // Save state before adding
+      pushToHistory(); 
       const url = URL.createObjectURL(file);
       const newLogo: LogoObject = {
         id: Date.now().toString(),
         url,
         viewIndex: state.activeImageIndex, 
-        x: 100, // Initial position
-        y: 100,
+        x: 40, // Start roughly center (40-60%)
+        y: 30,
         scale: 1,
         rotation: 0,
         refinement: RefinementType.DRUCK, 
@@ -250,7 +405,7 @@ function App() {
   };
 
   const handleLogoUpdate = (id: string, updates: Partial<LogoObject>) => {
-    pushToHistory(); // Save state before update (drag end)
+    pushToHistory();
     setState(prev => ({
         ...prev,
         logos: prev.logos.map(l => l.id === id ? { ...l, ...updates } : l)
@@ -259,7 +414,7 @@ function App() {
 
   const handleDeleteLogo = () => {
       if (!state.selectedLogoId) return;
-      pushToHistory(); // Save state before delete
+      pushToHistory(); 
       setState(prev => ({
           ...prev,
           logos: prev.logos.filter(l => l.id !== prev.selectedLogoId),
@@ -289,32 +444,23 @@ function App() {
     }));
   };
 
-  // --- Handlers: Canvas Zoom ---
   const zoomIn = (e: React.MouseEvent) => { e.stopPropagation(); setCanvasZoom(z => Math.min(maxZoom, z + 0.25)); };
   const zoomOut = (e: React.MouseEvent) => { e.stopPropagation(); setCanvasZoom(z => Math.max(minZoom, z - 0.25)); };
   const zoomReset = (e: React.MouseEvent) => { e.stopPropagation(); setCanvasZoom(1); };
 
-  // --- Price Logic ---
   const getEstimatedTotal = () => {
-    // 1. Calculate Quantity
     const totalQty = (state.isUnsureAboutSizes 
         ? state.totalEstimatedQuantity 
         : (Object.values(state.quantities) as number[]).reduce((a, b) => a + b, 0)) as number;
     
-    // 2. Calculate Refinement Costs per Item
-    // Stick = +5, Druck = +3
     const refinementCostPerItem = state.logos.reduce((sum, logo) => {
         return sum + (logo.refinement === RefinementType.STICK ? 5.00 : 3.00);
     }, 0);
 
-    // 3. Base Price + Refinement
-    // If no base price, assume 0 for calc (or display request on demand)
     const base = state.basePrice || 0;
     const singleItemPrice = base + refinementCostPerItem;
-
     const totalPrice = singleItemPrice * totalQty;
 
-    // 4. Validate Rules
     const hasStick = state.logos.some(l => l.refinement === RefinementType.STICK);
     const isMoqValid = !hasStick || totalQty >= MIN_STICK_QTY;
 
@@ -329,140 +475,14 @@ function App() {
     };
   };
 
-  // --- Handlers: Sharing ---
-  const generateSummaryText = () => {
-    const { totalQty, totalPrice, hasBasePrice } = getEstimatedTotal();
-    
-    let text = `ANFRAGE ÜBERSICHT (Veredelung)\n`;
-    text += `--------------------------------\n`;
-    if (shopifyUrl) text += `Produkt: ${shopifyUrl}\n\n`;
-    
-    text += `Gesamtmenge: ${totalQty} Stk.${state.isUnsureAboutSizes ? ' (Geschätzt)' : ''}\n`;
-    
-    if (hasBasePrice && totalQty > 0) {
-        text += `Geschätzter Gesamtpreis: ${totalPrice.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}\n\n`;
-    } else {
-        text += `\n`;
-    }
-
-    if (!state.isUnsureAboutSizes) {
-        text += `Größenaufteilung:\n`;
-        Object.entries(state.quantities).forEach(([size, qty]) => {
-            if (qty > 0) text += `- ${size}: ${qty}\n`;
-        });
-        text += `\n`;
-    }
-
-    text += `Motive (${state.logos.length}):\n`;
-    state.logos.forEach((logo, idx) => {
-        text += `${idx + 1}. Ansicht ${logo.viewIndex + 1} -> Veredelung: ${logo.refinement}\n`;
-    });
-
-    return text;
-  };
-
-  const copyToClipboard = () => {
-    const text = generateSummaryText();
-    navigator.clipboard.writeText(text).then(() => {
-        setCopiedText(true);
-        setTimeout(() => setCopiedText(false), 2000);
-    });
-  };
-
-  // Helper to draw the composite image for clipboard
-  const copyImageToClipboard = async (viewIndex: number) => {
-      if (!snapshotDimensions) return;
-      setCopyingImageId(viewIndex);
-      
-      try {
-          const canvas = document.createElement('canvas');
-          const ctx = canvas.getContext('2d');
-          if (!ctx) throw new Error("No Context");
-
-          // Use the captured dimensions to ensure 1:1 match with what was seen
-          canvas.width = snapshotDimensions.width;
-          canvas.height = snapshotDimensions.height;
-
-          // 1. Draw Product Image
-          const productImg = new Image();
-          productImg.crossOrigin = "Anonymous";
-          const productUrl = state.productImages[viewIndex];
-          
-          await new Promise<void>((resolve, reject) => {
-              productImg.onload = () => resolve();
-              productImg.onerror = reject;
-              productImg.src = productUrl;
-          });
-
-          ctx.drawImage(productImg, 0, 0, canvas.width, canvas.height);
-
-          // 2. Draw Logos
-          const viewLogos = state.logos.filter(l => l.viewIndex === viewIndex);
-          
-          for (const logo of viewLogos) {
-              const logoImg = new Image();
-              logoImg.crossOrigin = "Anonymous";
-              await new Promise<void>((resolve, reject) => {
-                  logoImg.onload = () => resolve();
-                  logoImg.onerror = reject;
-                  logoImg.src = logo.url;
-              });
-
-              const baseSize = 150;
-              const logoWidth = baseSize * logo.scale;
-              const logoHeight = baseSize * logo.scale;
-              
-              ctx.save();
-              
-              const centerX = logo.x + logoWidth / 2;
-              const centerY = logo.y + logoHeight / 2;
-              
-              ctx.translate(centerX, centerY);
-              ctx.rotate((logo.rotation * Math.PI) / 180);
-              
-              ctx.drawImage(logoImg, -logoWidth / 2, -logoHeight / 2, logoWidth, logoHeight);
-              
-              ctx.restore();
-          }
-
-          // 3. Write to Clipboard
-          canvas.toBlob((blob) => {
-              if (blob) {
-                  try {
-                      navigator.clipboard.write([
-                          new ClipboardItem({ 'image/png': blob })
-                      ]).then(() => {
-                          alert("Bild für Ansicht " + (viewIndex + 1) + " kopiert!");
-                      }).catch((err) => {
-                          console.error(err);
-                          alert("Kopieren fehlgeschlagen. Bitte Browser-Berechtigungen prüfen.");
-                      });
-                  } catch (e) {
-                      alert("Dein Browser unterstützt das direkte Bild-Kopieren nicht.");
-                  }
-              }
-              setCopyingImageId(null);
-          }, 'image/png');
-
-      } catch (error) {
-          console.error("Image generation failed", error);
-          setCopyingImageId(null);
-          alert("Fehler beim Erstellen des Bildes.");
-      }
-  };
-
   const handleOpenShare = () => {
-      if (canvasRef.current) {
-          setSnapshotDimensions({
-              width: canvasRef.current.offsetWidth,
-              height: canvasRef.current.offsetHeight
-          });
-      }
       setShowShareModal(true);
   };
-
-  // --- Handlers: Checkout ---
   
+  const handlePrint = () => {
+      window.print();
+  };
+
   const [formData, setFormData] = useState<ContactFormData>({
     company: '', name: '', email: '', phone: '', message: ''
   });
@@ -475,127 +495,54 @@ function App() {
     window.location.reload();
   };
 
-  // --- Helpers ---
   const currentLogos = state.logos.filter(l => l.viewIndex === state.activeImageIndex);
   const selectedLogo = state.logos.find(l => l.id === state.selectedLogoId);
 
-  // --- Renderers ---
-
-  // SHARE MODAL RENDERER
   const renderShareModal = () => {
-      if (!showShareModal || !snapshotDimensions) return null;
-      
-      const summaryText = generateSummaryText();
-      const viewsWithLogosIndices = Array.from(new Set(state.logos.map(l => l.viewIndex))).sort();
-      const viewsToShow = viewsWithLogosIndices.length > 0 ? viewsWithLogosIndices : [state.activeImageIndex];
+      if (!showShareModal) return null;
+      const { totalQty, totalPrice, hasBasePrice } = getEstimatedTotal();
 
       return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white rounded-2xl shadow-2xl max-w-6xl w-full h-[90vh] flex flex-col overflow-hidden">
-                {/* Header */}
-                <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50 shrink-0">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200 print:bg-white print:p-0 print:static print:block">
+            <div className="bg-slate-200 rounded-2xl shadow-2xl max-w-5xl w-full h-[90vh] flex flex-col overflow-hidden print:shadow-none print:h-auto print:w-auto print:bg-white print:overflow-visible">
+                <div className="p-4 border-b border-slate-300 flex justify-between items-center bg-slate-100 shrink-0 print:hidden">
                     <h3 className="font-bold text-slate-800 flex items-center gap-2 text-lg">
-                        <Share2 size={20} /> Konfiguration teilen & speichern
+                        <FileText size={20} /> Dokumentenvorschau (PDF)
                     </h3>
-                    <button onClick={() => setShowShareModal(false)} className="text-slate-400 hover:text-slate-600">
+                    <button onClick={() => setShowShareModal(false)} className="text-slate-500 hover:text-slate-800">
                         <X size={24} />
                     </button>
                 </div>
                 
-                {/* Body - 2 Columns */}
-                <div className="flex-1 overflow-hidden grid grid-cols-1 md:grid-cols-2">
-                    
-                    {/* LEFT: Visual Preview Grid */}
-                    <div className="p-6 overflow-y-auto bg-slate-100 border-r border-slate-200">
-                        <p className="text-xs font-bold text-slate-500 uppercase mb-4 sticky top-0 bg-slate-100 z-10 py-2">
-                            Visuelle Vorschau ({viewsToShow.length} Ansichten)
-                        </p>
-                        
-                        <div className="space-y-8">
-                            {viewsToShow.map(viewIdx => {
-                                const viewLogos = state.logos.filter(l => l.viewIndex === viewIdx);
-                                const viewImage = state.productImages[viewIdx];
-
-                                return (
-                                    <div key={viewIdx} className="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-                                        <div className="flex justify-between items-center mb-2">
-                                            <span className="font-bold text-sm text-slate-700">Ansicht {viewIdx + 1}</span>
-                                            <button 
-                                                onClick={() => copyImageToClipboard(viewIdx)}
-                                                disabled={copyingImageId !== null}
-                                                className="text-xs flex items-center gap-1 text-blue-600 hover:text-blue-800 font-medium px-2 py-1 rounded hover:bg-blue-50 transition-colors"
-                                            >
-                                                {copyingImageId === viewIdx ? <Loader2 className="animate-spin" size={12}/> : <ImageDown size={14}/>}
-                                                Als Bild kopieren
-                                            </button>
-                                        </div>
-
-                                        <div className="w-full relative bg-slate-50 rounded border border-slate-100 overflow-hidden" style={{ paddingTop: '100%' }}> 
-                                            <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
-                                                <div 
-                                                    style={{ 
-                                                        width: snapshotDimensions.width,
-                                                        height: snapshotDimensions.height,
-                                                        transform: 'scale(0.4)', 
-                                                        transformOrigin: 'center center',
-                                                        position: 'relative',
-                                                        backgroundColor: '#fff',
-                                                        flexShrink: 0
-                                                    }}
-                                                >
-                                                    <img 
-                                                        src={viewImage} 
-                                                        className="w-full h-full block" 
-                                                        alt="Preview" 
-                                                        style={{ objectFit: 'contain' }} 
-                                                    />
-                                                    {viewLogos.map(logo => (
-                                                        <div key={logo.id + 'modal'} 
-                                                            style={{
-                                                                transform: `translate(${logo.x}px, ${logo.y}px) rotate(${logo.rotation}deg)`,
-                                                                width: 150 * logo.scale,
-                                                                height: 150 * logo.scale,
-                                                                position: 'absolute', top: 0, left: 0,
-                                                                zIndex: 10
-                                                            }}>
-                                                            <img src={logo.url} className="w-full h-full object-contain" alt="logo" />
-                                                            <div className="absolute -top-5 -right-5 bg-slate-900 text-white text-[14px] px-3 py-1 rounded-full shadow-lg whitespace-nowrap z-50">
-                                                                {logo.refinement}
-                                                            </div>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )
-                            })}
-                        </div>
+                <div className="flex-1 overflow-y-auto p-8 flex justify-center print:p-0 print:overflow-visible">
+                    <div id="printable-area" className="transform origin-top scale-75 md:scale-100 transition-transform duration-200 shadow-xl print:transform-none print:shadow-none print:w-full print:h-full">
+                        <PrintableQuote 
+                            state={state} 
+                            totalPrice={totalPrice} 
+                            totalQty={totalQty}
+                            hasBasePrice={hasBasePrice}
+                            imageDimensions={imageDimensions}
+                        />
                     </div>
+                </div>
 
-                    {/* RIGHT: Text Details */}
-                    <div className="p-6 overflow-y-auto bg-white flex flex-col">
-                         <p className="text-xs font-bold text-slate-500 uppercase mb-2">Text-Zusammenfassung</p>
-                         <p className="text-sm text-slate-400 mb-4">Ideal zum Kopieren in E-Mails oder WhatsApp.</p>
-                         
-                         <div className="flex-1 bg-slate-50 p-4 rounded-xl border border-slate-200 font-mono text-sm text-slate-700 whitespace-pre-wrap overflow-y-auto shadow-inner">
-                            {summaryText}
-                         </div>
-
-                         <div className="mt-6 pt-6 border-t border-slate-100 flex gap-3 shrink-0">
-                            <button 
-                                onClick={copyToClipboard}
-                                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold transition-all ${copiedText ? 'bg-green-600 text-white shadow-lg shadow-green-200' : 'bg-white border-2 border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50'}`}
-                            >
-                                {copiedText ? <><Check size={18} /> In Zwischenablage kopiert!</> : <><Copy size={18} /> Text kopieren</>}
-                            </button>
-                            <button 
-                                onClick={() => setShowShareModal(false)}
-                                className="px-8 py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 shadow-lg shadow-slate-200"
-                            >
-                                Schließen
-                            </button>
-                        </div>
+                <div className="p-4 border-t border-slate-300 bg-white flex justify-between items-center print:hidden">
+                    <p className="text-sm text-slate-500 hidden md:block">
+                        Nutze "Als PDF speichern" im Druckdialog.
+                    </p>
+                    <div className="flex gap-3 ml-auto">
+                         <button 
+                            onClick={() => setShowShareModal(false)}
+                            className="px-6 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg font-bold hover:bg-slate-50"
+                        >
+                            Schließen
+                        </button>
+                        <button 
+                            onClick={handlePrint}
+                            className="px-6 py-2 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 shadow-md flex items-center gap-2"
+                        >
+                            <Printer size={18} /> Drucken / PDF speichern
+                        </button>
                     </div>
                 </div>
             </div>
@@ -605,7 +552,7 @@ function App() {
 
   if (state.step === 'upload') {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gradient-to-br from-slate-50 to-slate-100">
+      <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gradient-to-br from-slate-50 to-slate-100 print:hidden">
         <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 border border-slate-100">
           <div className="text-center mb-8">
             <div className="bg-blue-600 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-200">
@@ -670,7 +617,7 @@ function App() {
     const refinementSummary = Array.from(new Set(state.logos.map(l => l.refinement))).join(', ');
     
     return (
-      <div className="min-h-screen bg-slate-50 p-4 md:p-8 flex justify-center">
+      <div className="min-h-screen bg-slate-50 p-4 md:p-8 flex justify-center print:hidden">
         <div className="max-w-2xl w-full bg-white rounded-2xl shadow-lg overflow-hidden flex flex-col">
           <div className="p-6 border-b border-slate-100 bg-slate-50/50">
             <h2 className="text-2xl font-bold text-slate-800">B2B Anfrage senden</h2>
@@ -732,19 +679,16 @@ function App() {
     );
   }
 
-  // --- Main Configurator ---
   const activeImageUrl = state.productImages[state.activeImageIndex];
-  const { totalQty, totalPrice, hasBasePrice, isMoqValid, hasStick } = getEstimatedTotal();
   const maxLogosReached = state.logos.length >= MAX_LOGOS;
+  const { totalQty, totalPrice, hasBasePrice, isMoqValid } = getEstimatedTotal();
 
   return (
-    <div className="h-screen flex flex-col md:flex-row bg-white overflow-hidden">
+    <div className="h-screen flex flex-col md:flex-row bg-white overflow-hidden print:hidden">
       {renderShareModal()}
 
-      {/* LEFT: Canvas & Gallery */}
       <div className="flex-1 bg-slate-100 relative flex flex-col h-full overflow-hidden">
         
-        {/* Undo/Redo Controls (Top Left) */}
         <div className="absolute top-4 left-4 z-30 flex gap-2">
             <button onClick={handleUndo} disabled={history.length === 0} className="bg-white p-2 rounded shadow-md text-slate-700 hover:text-blue-600 disabled:opacity-50 disabled:cursor-not-allowed">
                 <Undo2 size={20} />
@@ -754,7 +698,6 @@ function App() {
             </button>
         </div>
 
-        {/* Zoom Controls (Top Right of Canvas Area) */}
         <div className="absolute top-4 right-4 z-30 flex flex-col gap-2">
             <button onClick={zoomIn} disabled={canvasZoom >= maxZoom} className="bg-white p-2 rounded shadow-md text-slate-700 hover:text-blue-600 disabled:opacity-50">
                 <ZoomIn size={20} />
@@ -770,18 +713,14 @@ function App() {
             </div>
         </div>
         
-        {/* Main Preview Canvas */}
         <div className="flex-1 flex items-center justify-center p-8 overflow-hidden bg-slate-100 relative" 
              onClick={() => setState(prev => ({ ...prev, selectedLogoId: null }))}>
           
-          {/* Scalable Container for Image + Logos */}
           <div 
-             // We add a REF here to measure this exact container when sharing
              ref={canvasRef}
              className="relative shadow-2xl bg-white transition-transform duration-100 ease-out origin-center"
              style={{ 
                  transform: `scale(${canvasZoom})`,
-                 // Container size is dictated by the image content (display: block)
              }}
           >
             {activeImageUrl ? (
@@ -794,7 +733,6 @@ function App() {
                 <div className="w-[300px] h-[400px] flex items-center justify-center text-slate-400 bg-slate-50">Kein Bild geladen</div>
             )}
 
-            {/* Render Logos Layer */}
             <div className="absolute inset-0 top-0 left-0 w-full h-full">
                 {currentLogos.map(logo => (
                 <LogoDraggable 
@@ -803,8 +741,8 @@ function App() {
                     imageSrc={logo.url}
                     isSelected={state.selectedLogoId === logo.id}
                     onSelect={() => setState(prev => ({ ...prev, selectedLogoId: logo.id }))}
-                    initialX={logo.x}
-                    initialY={logo.y}
+                    xPercent={logo.x}
+                    yPercent={logo.y}
                     initialScale={logo.scale}
                     initialRotation={logo.rotation}
                     canvasZoom={canvasZoom}
@@ -815,7 +753,6 @@ function App() {
           </div>
         </div>
 
-        {/* Thumbnail Gallery (Bottom) */}
         {state.productImages.length > 1 && (
             <div className="h-24 bg-white border-t border-slate-200 p-2 flex gap-2 overflow-x-auto items-center justify-center shrink-0 z-20">
                 {state.productImages.map((img, idx) => (
@@ -831,7 +768,6 @@ function App() {
         )}
       </div>
 
-      {/* RIGHT: Controls */}
       <div className="w-full md:w-[400px] bg-white border-l border-slate-200 flex flex-col h-[50vh] md:h-auto overflow-y-auto relative z-40 shadow-xl">
         <div className="p-6 space-y-6 pb-24">
           
@@ -842,7 +778,6 @@ function App() {
              </div>
           </div>
 
-          {/* 1. Add Logo Button */}
           <button
              onClick={() => !maxLogosReached && logoInputRef.current?.click()}
              disabled={maxLogosReached}
@@ -854,7 +789,6 @@ function App() {
            </button>
            <input type="file" ref={logoInputRef} className="hidden" accept="image/*" onChange={handleLogoUpload} />
 
-          {/* 2. Selected Logo Settings */}
           {selectedLogo ? (
             <div className="bg-slate-50 p-4 rounded-xl border border-blue-100 ring-1 ring-blue-100 shadow-sm">
                 <div className="flex justify-between items-start mb-4">
@@ -866,7 +800,6 @@ function App() {
                 </div>
 
                 <div className="space-y-4">
-                    {/* Refinement Type Selector */}
                     <div>
                         <label className="block text-xs font-medium text-slate-500 mb-1.5">Veredelungsart für dieses Logo</label>
                         <select 
@@ -892,11 +825,9 @@ function App() {
 
           <hr className="border-slate-100" />
 
-          {/* 3. Quantities */}
           <div>
                <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wide mb-3">Größen & Mengen</h3>
                
-               {/* Checkbox: Unsure about sizes */}
                <div className="flex items-center gap-3 mb-4 p-3 bg-slate-50 border border-slate-200 rounded-lg">
                     <div className="relative flex items-center">
                         <input 
@@ -944,7 +875,6 @@ function App() {
             </div>
         </div>
 
-        {/* Footer Action */}
         <div className="mt-auto border-t border-slate-100 p-6 bg-white sticky bottom-0 z-20 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
           <div className="flex justify-between items-center mb-4 text-sm text-slate-600">
              <span>Gesamtmenge:</span>
@@ -962,7 +892,6 @@ function App() {
              </div>
           </div>
           
-          {/* MOQ Warning */}
           {!isMoqValid && (
               <div className="mb-4 bg-amber-50 border border-amber-200 rounded-lg p-3 flex gap-2 items-start animate-in fade-in">
                   <AlertTriangle size={18} className="text-amber-600 mt-0.5 shrink-0" />
