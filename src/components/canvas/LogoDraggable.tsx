@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { ArrowUpLeft, RefreshCcw, Move } from 'lucide-react';
+import { ArrowUpLeft, RotateCw } from 'lucide-react';
 
 interface Props {
   id: string;
@@ -152,7 +152,7 @@ export const LogoDraggable: React.FC<Props> = ({
         cursor: mode === 'drag' ? 'grabbing' : 'grab',
         zIndex: isSelected ? 20 : 10,
       }}
-      className={`group select-none ${isSelected ? 'ring-2 ring-blue-500 ring-offset-2' : ''}`}
+      className={`group select-none ${isSelected ? 'ring-2 ring-primary-400 ring-offset-2' : ''}`}
     >
       <img 
         src={imageSrc} 
@@ -171,7 +171,7 @@ export const LogoDraggable: React.FC<Props> = ({
                 className="absolute -top-3 -right-3 w-6 h-6 bg-white border border-slate-300 rounded-full shadow-sm flex items-center justify-center cursor-alias hover:bg-slate-50 z-30"
                 title="Drehen"
             >
-                <RefreshCcw size={12} className="text-slate-600" />
+                <RotateCw size={12} className="text-slate-600" />
             </div>
 
             <div
@@ -180,10 +180,10 @@ export const LogoDraggable: React.FC<Props> = ({
                   transform: `scale(${handleScale})`,
                   transformOrigin: 'top left',
                 }}
-                className="absolute -bottom-3 -right-3 w-6 h-6 bg-blue-600 border border-blue-700 rounded-full shadow-sm flex items-center justify-center cursor-nwse-resize hover:bg-blue-700 z-30"
+                className="absolute -bottom-3 -right-3 w-6 h-6 bg-primary-400 border border-primary-500 rounded-full shadow-sm flex items-center justify-center cursor-nwse-resize hover:bg-primary-500 z-30"
                 title="Größe ändern"
             >
-                <ArrowUpLeft size={12} className="text-white transform -rotate-90" />
+                <ArrowUpLeft size={12} className="text-slate-900 transform -rotate-90" />
             </div>
         </>
       )}

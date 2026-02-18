@@ -43,7 +43,7 @@ export const removeWhiteBackground = (imageSrc: string): Promise<string> => {
  * Extrahiert Bilder DIREKT aus den URL-Parametern, 
  * anstatt die Seite erneut zu scrapen (verhindert CORS/530 Errors).
  */
-export const extractShopifyImage = async (currentBrowserUrl: string): Promise<string[]> => {
+export const extractShopifyImage = async (_currentBrowserUrl: string): Promise<string[]> => {
   try {
     const urlParams = new URLSearchParams(window.location.search);
     const imagesParam = urlParams.get('images');
