@@ -1,7 +1,7 @@
 import React from 'react';
 import { useConfigStore } from '@/stores/useConfigStore';
 
-const BLUEPRINT_VIEW_LABELS = ['Front', 'Links', 'Rechts', 'Rückseite'];
+const BLUEPRINT_VIEW_LABELS = ['Vorderseite', 'Links', 'Rechts', 'Rückseite'];
 
 export const ImageThumbnailBar: React.FC = () => {
   const productImages = useConfigStore((s) => s.productImages);

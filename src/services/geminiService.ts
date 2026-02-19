@@ -1,17 +1,16 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { RefinementType } from "@/types";
 
-// Blueprint view generation types
-export type BlueprintView = 'front' | 'left' | 'right' | 'back';
+// Blueprint view generation types — only 3 views are generated; right is mirrored from left
+export type BlueprintView = 'front' | 'left' | 'back';
 
 const VIEW_PROMPTS: Record<BlueprintView, string> = {
   front: 'FRONT VIEW: Show the garment facing directly toward the viewer. The viewer sees the chest, front zipper/buttons, and front pockets.',
   left: 'LEFT SIDE VIEW: Show the garment from the LEFT side. The viewer is standing to the LEFT of the garment looking at it. The left sleeve faces the viewer, the right sleeve is hidden behind the garment.',
-  right: 'RIGHT SIDE VIEW: Show the garment from the RIGHT side. The viewer is standing to the RIGHT of the garment looking at it. The right sleeve faces the viewer, the left sleeve is hidden behind the garment. This is the MIRROR OPPOSITE of the left side view.',
   back: 'BACK VIEW: Show the garment from behind. The viewer sees the back of the garment, the back of the collar/hood, and the back of the sleeves.',
 };
 
-const BLUEPRINT_VIEWS: BlueprintView[] = ['front', 'left', 'right', 'back'];
+const BLUEPRINT_VIEWS: BlueprintView[] = ['front', 'left', 'back'];
 
 export const urlToBase64 = async (url: string): Promise<string> => {
   const response = await fetch(url);
@@ -150,7 +149,27 @@ VERIFY BEFORE OUTPUTTING: Is every single pixel either #000000 or #FFFFFF? If no
   throw new Error(`Kein Bild generiert für ${view}`);
 }
 
-// Generate all 4 blueprint views from a product image
+// Mirror an image horizontally using an offscreen canvas
+function mirrorImageHorizontally(dataUrl: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return reject(new Error('Canvas context nicht verfügbar'));
+      ctx.translate(canvas.width, 0);
+      ctx.scale(-1, 1);
+      ctx.drawImage(img, 0, 0);
+      resolve(canvas.toDataURL('image/png'));
+    };
+    img.onerror = () => reject(new Error('Bild konnte nicht geladen werden'));
+    img.src = dataUrl;
+  });
+}
+
+// Generate 3 blueprint views + mirror left→right, returns [front, left, right, back]
 export async function generateBlueprintViews(firstImageUrl: string): Promise<string[]> {
   const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
   if (!apiKey) {
@@ -160,9 +179,13 @@ export async function generateBlueprintViews(firstImageUrl: string): Promise<str
   const ai = new GoogleGenAI({ apiKey });
   const imageBase64 = await urlToBase64(firstImageUrl);
 
-  const results = await Promise.all(
+  // Generate only front, left, back (3 API calls instead of 4)
+  const [front, left, back] = await Promise.all(
     BLUEPRINT_VIEWS.map((view) => generateSingleBlueprint(ai, imageBase64, view))
   );
 
-  return results;
+  // Mirror left view to create right view
+  const right = await mirrorImageHorizontally(left);
+
+  return [front, left, right, back];
 }
