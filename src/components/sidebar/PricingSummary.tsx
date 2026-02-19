@@ -51,7 +51,7 @@ export const PricingSummary: React.FC = () => {
         <button
           onClick={() => navigate('/checkout')}
           disabled={!isMoqValid}
-          className={`flex-1 py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 transition-all active:scale-[0.98] ${isMoqValid ? 'bg-slate-900 hover:bg-slate-800 text-white' : 'bg-slate-200 text-slate-400 cursor-not-allowed'}`}
+          className={`flex-1 py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 transition-all active:scale-[0.98] ${isMoqValid ? 'bg-primary-500 hover:bg-primary-600 text-white shadow-md' : 'bg-slate-200 text-slate-400 cursor-not-allowed'}`}
         >
           Weiter zur Anfrage <ArrowRight size={18} />
         </button>

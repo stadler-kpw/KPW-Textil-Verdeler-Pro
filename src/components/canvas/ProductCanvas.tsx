@@ -1,11 +1,11 @@
 import React, { useRef, useEffect } from 'react';
-import { Shirt } from 'lucide-react';
 import { useConfigStore } from '@/stores/useConfigStore';
 import { useUiStore } from '@/stores/useUiStore';
 import { LogoOverlay } from './LogoOverlay';
 import { CanvasZoomControls } from './CanvasZoomControls';
 import { UndoRedoControls } from './UndoRedoControls';
 import { ImageThumbnailBar } from './ImageThumbnailBar';
+import kpwLogo from '@/assets/KPW_Logo_Vector_Neu-01.webp';
 
 export const ProductCanvas: React.FC = () => {
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -46,21 +46,35 @@ export const ProductCanvas: React.FC = () => {
         onClick={() => selectLogo(null)}
       >
         {blueprintStatus === 'loading' ? (
-          <div className="flex flex-col items-center justify-center gap-6">
+          <div className="flex flex-col items-center justify-center gap-8 w-full max-w-md px-4">
+            {/* Logo with pulse */}
             <div className="relative">
-              <div className="w-20 h-20 rounded-2xl bg-white shadow-lg flex items-center justify-center">
-                <Shirt className="w-10 h-10 text-primary-400 animate-pulse" />
+              <img
+                src={kpwLogo}
+                alt="KPW"
+                className="h-16 w-auto object-contain animate-pulse"
+              />
+            </div>
+
+            {/* Skeleton canvas placeholder */}
+            <div className="w-full space-y-4">
+              <div className="w-full aspect-[3/4] rounded-2xl bg-gradient-to-br from-slate-200 via-slate-100 to-slate-200 bg-[length:200%_100%] animate-[shimmer_1.5s_ease-in-out_infinite] shadow-inner" />
+
+              {/* Skeleton thumbnail bar */}
+              <div className="flex justify-center gap-3">
+                {[...Array(4)].map((_, i) => (
+                  <div
+                    key={i}
+                    className="w-14 h-14 rounded-lg bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 bg-[length:200%_100%] animate-[shimmer_1.5s_ease-in-out_infinite]"
+                    style={{ animationDelay: `${i * 0.15}s` }}
+                  />
+                ))}
               </div>
-              <div className="absolute -inset-2 rounded-3xl border-4 border-slate-200 border-t-primary-400 animate-spin" />
             </div>
-            <div className="text-center mt-2">
-              <p className="text-slate-700 font-semibold text-lg">
-                Veredelungskonfigurator lädt...
-              </p>
-              <p className="text-slate-400 text-sm mt-1">
-                Blueprint-Ansichten werden generiert
-              </p>
-            </div>
+
+            <p className="text-slate-400 text-sm">
+              Veredelungskonfigurator lädt...
+            </p>
           </div>
         ) : (
           <div

@@ -28,7 +28,7 @@ export const LogoUploadButton: React.FC = () => {
       <button
         onClick={() => !maxLogosReached && logoInputRef.current?.click()}
         disabled={maxLogosReached}
-        className={`w-full py-3 border-2 border-dashed rounded-lg transition-colors flex items-center justify-center gap-2 font-medium ${maxLogosReached ? 'border-slate-200 bg-slate-50 text-slate-400 cursor-not-allowed' : 'border-primary-200 bg-primary-50 text-primary-700 hover:bg-primary-100'}`}
+        className={`w-full py-5 border-2 border-dashed rounded-xl transition-colors flex items-center justify-center gap-2 font-medium ${maxLogosReached ? 'border-slate-200 bg-slate-50 text-slate-400 cursor-not-allowed' : 'border-sky-300 bg-sky-50 text-sky-700 hover:bg-sky-100'}`}
       >
         <Upload size={18} />
         {maxLogosReached ? 'Maximal 5 Logos erreicht' : 'Logo auf diese Ansicht hinzufügen'}

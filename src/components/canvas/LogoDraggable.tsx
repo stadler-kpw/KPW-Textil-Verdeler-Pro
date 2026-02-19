@@ -152,7 +152,7 @@ export const LogoDraggable: React.FC<Props> = ({
         cursor: mode === 'drag' ? 'grabbing' : 'grab',
         zIndex: isSelected ? 20 : 10,
       }}
-      className={`group select-none ${isSelected ? 'ring-2 ring-primary-400 ring-offset-2' : ''}`}
+      className={`group select-none ${isSelected ? 'ring-2 ring-sky-400 ring-offset-2' : ''}`}
     >
       <img 
         src={imageSrc} 
@@ -180,7 +180,7 @@ export const LogoDraggable: React.FC<Props> = ({
                   transform: `scale(${handleScale})`,
                   transformOrigin: 'top left',
                 }}
-                className="absolute -bottom-3 -right-3 w-6 h-6 bg-primary-400 border border-primary-500 rounded-full shadow-sm flex items-center justify-center cursor-nwse-resize hover:bg-primary-500 z-30"
+                className="absolute -bottom-3 -right-3 w-6 h-6 bg-sky-400 border border-sky-500 rounded-full shadow-sm flex items-center justify-center cursor-nwse-resize hover:bg-sky-500 z-30"
                 title="Größe ändern"
             >
                 <ArrowUpLeft size={12} className="text-slate-900 transform -rotate-90" />
