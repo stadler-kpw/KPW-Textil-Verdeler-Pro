@@ -300,14 +300,14 @@ export const PrintableQuote: React.FC<PrintableQuoteProps> = ({
         <div style={s.detailsCard}>
           <div style={s.grid2Col}>
             <div>
-              <p style={s.subHeading}>Gr&ouml;&szlig;enaufteilung</p>
+              <p style={s.subHeading}>Größenaufteilung</p>
               {isUnsureAboutSizes ? (
-                <p style={s.monoText}>Gr&ouml;&szlig;en noch unklar / gemischt</p>
+                <p style={s.monoText}>Größen noch unklar / gemischt</p>
               ) : (
                 <ul style={s.list}>
                   {(() => {
                     const entries = Object.entries(quantities).filter(([, q]) => q > 0);
-                    if (entries.length === 0) return <li>Keine Mengen gew&auml;hlt</li>;
+                    if (entries.length === 0) return <li>Keine Mengen gewählt</li>;
                     return entries.map(([size, qty], idx) => (
                       <li key={size} style={listItem(idx === entries.length - 1)}>
                         <span>{size}</span>
@@ -346,7 +346,7 @@ export const PrintableQuote: React.FC<PrintableQuoteProps> = ({
             </div>
             {hasBasePrice && (
               <div style={s.totalPriceRow}>
-                <span style={{ color: '#0f172a', fontWeight: 'bold' }}>Gesch&auml;tzter Gesamtpreis</span>
+                <span style={{ color: '#0f172a', fontWeight: 'bold' }}>Geschätzter Gesamtpreis</span>
                 <span style={s.totalPriceValue}>
                   {totalPrice.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
                 </span>
@@ -360,7 +360,7 @@ export const PrintableQuote: React.FC<PrintableQuoteProps> = ({
           </div>
         </div>
         <div style={s.footer}>
-          Dieses Dokument wurde automatisch generiert. Alle Preise sind unverbindliche Sch&auml;tzungen zzgl. MwSt.
+          Dieses Dokument wurde automatisch generiert. Alle Preise sind unverbindliche Schätzungen zzgl. MwSt.
         </div>
       </div>
     </div>
