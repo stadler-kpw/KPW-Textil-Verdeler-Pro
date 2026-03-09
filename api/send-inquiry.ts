@@ -39,7 +39,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const { data, error } = await resend.emails.send({
       from: 'KPW Textil Veredeler <onboarding@resend.dev>',
-      to: ['office@kp-workwear.com'],
+      to: ['stadler@kp-workwear.com'],
       replyTo: email,
       subject: `Neue Veredelungs-Anfrage von ${escapeHtml(company)} – ${escapeHtml(name)}`,
       html: `
