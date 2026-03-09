@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
-import { Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import { Loader2, AlertCircle } from 'lucide-react';
 import { useContactStore } from '@/stores/useContactStore';
 import { useConfigStore } from '@/stores/useConfigStore';
 import { useUiStore } from '@/stores/useUiStore';
@@ -13,7 +13,11 @@ import { sendInquiry } from '@/services/inquiryService';
 
 type SubmitStatus = 'idle' | 'generating-pdf' | 'sending' | 'success' | 'error';
 
-export const ContactForm: React.FC = () => {
+interface ContactFormProps {
+  onSuccess: () => void;
+}
+
+export const ContactForm: React.FC<ContactFormProps> = ({ onSuccess }) => {
   const navigate = useNavigate();
   const printRef = useRef<HTMLDivElement>(null);
   const [submitStatus, setSubmitStatus] = useState<SubmitStatus>('idle');
@@ -49,7 +53,7 @@ export const ContactForm: React.FC = () => {
       await sendInquiry(formData, pdfBlob);
 
       setSubmitStatus('success');
-      setTimeout(() => resetForm(), 3000);
+      onSuccess();
     } catch (error) {
       console.error('Inquiry submission failed:', error);
       setSubmitStatus('error');
@@ -114,12 +118,6 @@ export const ContactForm: React.FC = () => {
             value={formData.message} onChange={e => updateField('message', e.target.value)} />
         </div>
 
-        {submitStatus === 'success' && (
-          <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-lg flex items-center gap-2">
-            <CheckCircle size={18} />
-            Anfrage erfolgreich gesendet!
-          </div>
-        )}
         {submitStatus === 'error' && errorMessage && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center gap-2">
             <AlertCircle size={18} />

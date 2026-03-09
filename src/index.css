@@ -38,6 +38,35 @@ body {
   animation: fade-in 0.3s ease-out forwards;
 }
 
+/* Success screen animations */
+@keyframes success-circle-draw {
+  0% { stroke-dashoffset: 276; opacity: 0; }
+  20% { opacity: 1; }
+  100% { stroke-dashoffset: 0; opacity: 1; }
+}
+@keyframes success-check-draw {
+  0% { stroke-dashoffset: 60; }
+  100% { stroke-dashoffset: 0; }
+}
+@keyframes success-scale-in {
+  0% { transform: scale(0.5); opacity: 0; }
+  60% { transform: scale(1.1); }
+  100% { transform: scale(1); opacity: 1; }
+}
+.animate-success-circle {
+  animation: success-scale-in 0.5s ease-out forwards;
+}
+.animate-success-circle-draw {
+  stroke-dasharray: 276;
+  stroke-dashoffset: 276;
+  animation: success-circle-draw 0.8s ease-out 0.3s forwards;
+}
+.animate-success-check-draw {
+  stroke-dasharray: 60;
+  stroke-dashoffset: 60;
+  animation: success-check-draw 0.4s ease-out 0.9s forwards;
+}
+
 /* Print Styles for PDF Generation */
 @media print {
   @page {
