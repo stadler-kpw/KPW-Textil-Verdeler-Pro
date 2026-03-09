@@ -14,9 +14,6 @@ export interface ConfigState {
   availableSizes: string[];
   isUnsureAboutSizes: boolean;
   totalEstimatedQuantity: number;
-  blueprintStatus: 'idle' | 'loading' | 'done' | 'error';
-  blueprintError: string | null;
-  originalImages: string[];
 }
 
 interface ConfigActions {
@@ -30,11 +27,6 @@ interface ConfigActions {
   setQuantity: (size: string, qty: number) => void;
   setTotalEstimatedQuantity: (qty: number) => void;
   setIsUnsureAboutSizes: (val: boolean) => void;
-  setBlueprintStatus: (status: 'idle' | 'loading' | 'done' | 'error') => void;
-  setBlueprintError: (error: string | null) => void;
-  setOriginalImages: (images: string[]) => void;
-  replaceBlueprintImages: (images: string[]) => void;
-  fallbackToOriginalImages: () => void;
   reset: () => void;
 }
 
@@ -49,9 +41,6 @@ const initialState: ConfigState = {
   availableSizes: DEFAULT_SIZES,
   isUnsureAboutSizes: false,
   totalEstimatedQuantity: 0,
-  blueprintStatus: 'idle',
-  blueprintError: null,
-  originalImages: [],
 };
 
 export const useConfigStore = create<ConfigState & ConfigActions>()(
@@ -122,26 +111,12 @@ export const useConfigStore = create<ConfigState & ConfigActions>()(
 
       setIsUnsureAboutSizes: (val) => set({ isUnsureAboutSizes: val }),
 
-      setBlueprintStatus: (status) => set({ blueprintStatus: status }),
-      setBlueprintError: (error) => set({ blueprintError: error }),
-      setOriginalImages: (images) => set({ originalImages: images }),
-      replaceBlueprintImages: (images) => set({
-        productImages: images,
-        activeImageIndex: 0,
-        blueprintStatus: 'done',
-      }),
-      fallbackToOriginalImages: () => set((state) => ({
-        productImages: state.originalImages.length > 0 ? state.originalImages : state.productImages,
-        activeImageIndex: 0,
-        blueprintStatus: 'error',
-      })),
-
       reset: () => set(initialState),
     }),
     {
       limit: 50,
       partialize: (state) => {
-        const { selectedLogoId: _, blueprintStatus: _bs, blueprintError: _be, originalImages: _oi, ...rest } = state;
+        const { selectedLogoId: _, ...rest } = state;
         return rest;
       },
     }

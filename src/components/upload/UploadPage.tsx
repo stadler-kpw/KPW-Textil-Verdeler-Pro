@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import { parseDataFromUrl } from '@/lib/url-parser';
 import { useConfigStore } from '@/stores/useConfigStore';
 import { useUiStore } from '@/stores/useUiStore';
-import { useBlueprintGeneration } from '@/hooks/useBlueprintGeneration';
 
 export const UploadPage: React.FC = () => {
   const navigate = useNavigate();
@@ -14,7 +13,6 @@ export const UploadPage: React.FC = () => {
   const setProductImages = useConfigStore((s) => s.setProductImages);
   const errorMsg = useUiStore((s) => s.errorMsg);
   const setErrorMsg = useUiStore((s) => s.setErrorMsg);
-  const { triggerBlueprintGeneration } = useBlueprintGeneration();
 
   const handleUrlImport = () => {
     if (!shopifyUrl) return;
@@ -23,14 +21,12 @@ export const UploadPage: React.FC = () => {
       setProductImages(images, sizes, price, productRef || shopifyUrl);
       setErrorMsg(null);
       navigate('/config');
-      triggerBlueprintGeneration(images);
     } else {
       if (shopifyUrl.match(/\.(jpeg|jpg|gif|png|webp)$/i) || shopifyUrl.includes('cdn/shop')) {
         const singleImage = [shopifyUrl];
         setProductImages(singleImage, null, null, shopifyUrl);
         setErrorMsg(null);
         navigate('/config');
-        triggerBlueprintGeneration(singleImage);
       } else {
         setErrorMsg("Die URL enthält keine 'images' Parameter und ist kein direktes Bild.");
       }
