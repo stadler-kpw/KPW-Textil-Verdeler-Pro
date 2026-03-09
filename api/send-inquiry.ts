@@ -38,8 +38,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const pdfBuffer = Buffer.from(pdfBase64, 'base64');
 
     const { data, error } = await resend.emails.send({
-      from: 'KPW Textil Veredeler <onboarding@resend.dev>',
-      to: ['stadler@kp-workwear.com'],
+      from: 'KPW Textil Veredeler <veredelung@veredelung.kp-workwear.com>',
+      to: ['office@kp-workwear.com'],
       replyTo: email,
       subject: `Neue Veredelungs-Anfrage von ${escapeHtml(company)} – ${escapeHtml(name)}`,
       html: `
