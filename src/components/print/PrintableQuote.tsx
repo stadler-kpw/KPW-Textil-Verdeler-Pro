@@ -14,6 +14,204 @@ interface PrintableQuoteProps {
   canvasRenderedDimensions: Record<number, { width: number; height: number }>;
 }
 
+const s: Record<string, React.CSSProperties> = {
+  root: {
+    backgroundColor: '#ffffff',
+    width: '210mm',
+    minHeight: '297mm',
+    padding: '15mm',
+    color: '#0f172a',
+    position: 'relative',
+    fontFamily: "'Inter', system-ui, sans-serif",
+    boxSizing: 'border-box',
+  },
+  headerRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    borderBottom: '2px solid #0f172a',
+    paddingBottom: '24px',
+    marginBottom: '32px',
+  },
+  title: {
+    fontSize: '30px',
+    lineHeight: '36px',
+    fontWeight: 'bold',
+    textTransform: 'uppercase',
+    letterSpacing: '-0.025em',
+    color: '#0f172a',
+    margin: 0,
+  },
+  subtitle: {
+    color: '#64748b',
+    fontWeight: 500,
+    marginTop: '4px',
+    marginBottom: 0,
+  },
+  datumLabel: {
+    fontSize: '14px',
+    lineHeight: '20px',
+    fontWeight: 'bold',
+    color: '#94a3b8',
+    textTransform: 'uppercase',
+    margin: 0,
+  },
+  datumValue: {
+    fontSize: '18px',
+    lineHeight: '28px',
+    fontWeight: 'bold',
+    margin: 0,
+  },
+  sectionHeading: {
+    fontSize: '14px',
+    lineHeight: '20px',
+    fontWeight: 'bold',
+    textTransform: 'uppercase',
+    color: '#64748b',
+    marginBottom: '16px',
+    borderBottom: '1px solid #e2e8f0',
+    paddingBottom: '8px',
+    marginTop: 0,
+  },
+  grid2Col: {
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr',
+    gap: '32px',
+  },
+  viewCard: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '8px',
+    pageBreakInside: 'avoid',
+  },
+  viewLabel: {
+    fontSize: '12px',
+    lineHeight: '16px',
+    fontWeight: 'bold',
+    color: '#94a3b8',
+    textTransform: 'uppercase',
+  },
+  imageContainer: {
+    position: 'relative',
+    width: '100%',
+    backgroundColor: '#f8fafc',
+    border: '1px solid #e2e8f0',
+    borderRadius: '4px',
+    overflow: 'hidden',
+  },
+  productImage: {
+    width: '100%',
+    height: '100%',
+    display: 'block',
+    objectFit: 'contain',
+  },
+  logoOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: '100%',
+    height: '100%',
+  },
+  logoImage: {
+    width: '100%',
+    height: '100%',
+    objectFit: 'contain',
+  },
+  logoBadge: {
+    position: 'absolute',
+    top: '-16px',
+    left: 0,
+    backgroundColor: '#ffffff',
+    border: '1px solid #0f172a',
+    color: '#0f172a',
+    fontSize: '10px',
+    lineHeight: 1,
+    fontWeight: 'bold',
+    paddingLeft: '6px',
+    paddingRight: '6px',
+    paddingTop: '2px',
+    paddingBottom: '2px',
+    borderRadius: '4px',
+    boxShadow: '0 1px 2px 0 rgb(0 0 0 / 0.05)',
+    whiteSpace: 'nowrap',
+    zIndex: 50,
+  },
+  detailsCard: {
+    backgroundColor: '#f8fafc',
+    borderRadius: '8px',
+    padding: '24px',
+    border: '1px solid #e2e8f0',
+  },
+  subHeading: {
+    fontSize: '12px',
+    lineHeight: '16px',
+    fontWeight: 'bold',
+    color: '#94a3b8',
+    textTransform: 'uppercase',
+    marginBottom: '8px',
+    marginTop: 0,
+  },
+  monoText: {
+    fontFamily: "'Courier New', Courier, monospace",
+    color: '#334155',
+    margin: 0,
+  },
+  list: {
+    fontFamily: "'Courier New', Courier, monospace",
+    fontSize: '14px',
+    lineHeight: '20px',
+    listStyle: 'none',
+    padding: 0,
+    margin: 0,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '4px',
+  },
+  totalSection: {
+    marginTop: 'auto',
+    borderTop: '2px solid #0f172a',
+    paddingTop: '24px',
+    pageBreakInside: 'avoid',
+  },
+  totalRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    fontSize: '14px',
+    lineHeight: '20px',
+  },
+  totalPriceRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    paddingTop: '8px',
+    borderTop: '1px solid #e2e8f0',
+  },
+  totalPriceValue: {
+    fontSize: '24px',
+    lineHeight: '32px',
+    fontWeight: 'bold',
+    color: '#059669',
+  },
+  priceOnRequest: {
+    textAlign: 'right',
+    fontSize: '14px',
+    lineHeight: '20px',
+    color: '#64748b',
+    fontStyle: 'italic',
+    marginTop: '8px',
+  },
+  footer: {
+    marginTop: '32px',
+    fontSize: '10px',
+    color: '#94a3b8',
+    textAlign: 'center',
+    textTransform: 'uppercase',
+    letterSpacing: '0.05em',
+  },
+};
+
 export const PrintableQuote: React.FC<PrintableQuoteProps> = ({
   productImages,
   logos,
@@ -30,24 +228,32 @@ export const PrintableQuote: React.FC<PrintableQuoteProps> = ({
   const viewsWithLogosIndices = Array.from(new Set(logos.map(l => l.viewIndex))).sort();
   const viewsToShow = viewsWithLogosIndices.length > 0 ? viewsWithLogosIndices : [activeImageIndex];
 
+  const listItem = (isLast: boolean): React.CSSProperties => ({
+    display: 'flex',
+    justifyContent: 'space-between',
+    borderBottom: isLast ? 'none' : '1px solid #e2e8f0',
+    paddingTop: '4px',
+    paddingBottom: '4px',
+  });
+
   return (
-    <div id="printable-content" className="bg-white w-[210mm] min-h-[297mm] p-[15mm] text-slate-900 relative">
+    <div id="printable-content" style={s.root}>
       {/* Header */}
-      <div className="flex justify-between items-start border-b-2 border-slate-900 pb-6 mb-8">
+      <div style={s.headerRow}>
         <div>
-          <h1 className="text-3xl font-bold uppercase tracking-tight text-slate-900">Konfiguration</h1>
-          <p className="text-slate-500 font-medium mt-1">Veredelungs-Zusammenfassung</p>
+          <h1 style={s.title}>Konfiguration</h1>
+          <p style={s.subtitle}>Veredelungs-Zusammenfassung</p>
         </div>
-        <div className="text-right">
-          <p className="text-sm font-bold text-slate-400 uppercase">Datum</p>
-          <p className="text-lg font-bold">{dateStr}</p>
+        <div style={{ textAlign: 'right' }}>
+          <p style={s.datumLabel}>Datum</p>
+          <p style={s.datumValue}>{dateStr}</p>
         </div>
       </div>
 
       {/* Product & Visuals Grid */}
-      <div className="mb-8">
-        <h3 className="text-sm font-bold uppercase text-slate-500 mb-4 border-b border-slate-200 pb-2">Visuelle Vorschau</h3>
-        <div className="grid grid-cols-2 gap-8">
+      <div style={{ marginBottom: '32px' }}>
+        <h3 style={s.sectionHeading}>Visuelle Vorschau</h3>
+        <div style={s.grid2Col}>
           {viewsToShow.map(viewIdx => {
             const viewLogos = logos.filter(l => l.viewIndex === viewIdx);
             const viewImage = productImages[viewIdx];
@@ -56,14 +262,11 @@ export const PrintableQuote: React.FC<PrintableQuoteProps> = ({
             const aspectRatio = dims.width / dims.height;
 
             return (
-              <div key={viewIdx} className="flex flex-col gap-2 page-break-inside-avoid">
-                <span className="text-xs font-bold text-slate-400 uppercase">Ansicht {viewIdx + 1}</span>
-                <div
-                  className="relative w-full bg-slate-50 border border-slate-200 rounded overflow-hidden"
-                  style={{ aspectRatio: `${aspectRatio}` }}
-                >
-                  <img src={viewImage} className="w-full h-full block object-contain" alt="Preview" />
-                  <div className="absolute inset-0 top-0 left-0 w-full h-full">
+              <div key={viewIdx} style={s.viewCard}>
+                <span style={s.viewLabel}>Ansicht {viewIdx + 1}</span>
+                <div style={{ ...s.imageContainer, aspectRatio: `${aspectRatio}` }}>
+                  <img src={viewImage} style={s.productImage} alt="Preview" />
+                  <div style={s.logoOverlay}>
                     {viewLogos.map(logo => (
                       <div
                         key={logo.id + 'print'}
@@ -77,8 +280,8 @@ export const PrintableQuote: React.FC<PrintableQuoteProps> = ({
                           zIndex: 10,
                         }}
                       >
-                        <img src={logo.url} className="w-full h-full object-contain" alt="logo" />
-                        <div className="absolute -top-4 left-0 bg-white border border-slate-900 text-slate-900 text-[10px] leading-none font-bold px-1.5 py-0.5 rounded shadow-sm whitespace-nowrap z-50">
+                        <img src={logo.url} style={s.logoImage} alt="logo" />
+                        <div style={s.logoBadge}>
                           {logo.refinement}
                         </div>
                       </div>
@@ -92,36 +295,41 @@ export const PrintableQuote: React.FC<PrintableQuoteProps> = ({
       </div>
 
       {/* Details Table */}
-      <div className="mb-8 page-break-inside-avoid">
-        <h3 className="text-sm font-bold uppercase text-slate-500 mb-4 border-b border-slate-200 pb-2">Details & Mengen</h3>
-        <div className="bg-slate-50 rounded-lg p-6 border border-slate-200">
-          <div className="grid grid-cols-2 gap-8">
+      <div style={{ marginBottom: '32px', pageBreakInside: 'avoid' }}>
+        <h3 style={s.sectionHeading}>Details & Mengen</h3>
+        <div style={s.detailsCard}>
+          <div style={s.grid2Col}>
             <div>
-              <p className="text-xs font-bold text-slate-400 uppercase mb-2">Größenaufteilung</p>
+              <p style={s.subHeading}>Gr&ouml;&szlig;enaufteilung</p>
               {isUnsureAboutSizes ? (
-                <p className="font-mono text-slate-700">Größen noch unklar / gemischt</p>
+                <p style={s.monoText}>Gr&ouml;&szlig;en noch unklar / gemischt</p>
               ) : (
-                <ul className="space-y-1 font-mono text-sm">
-                  {Object.entries(quantities).filter(([, q]) => q > 0).map(([size, qty]) => (
-                    <li key={size} className="flex justify-between border-b border-slate-200 last:border-0 py-1">
-                      <span>{size}</span>
-                      <span className="font-bold">{qty}</span>
-                    </li>
-                  ))}
-                  {Object.values(quantities).every(q => q === 0) && <li>Keine Mengen gewählt</li>}
+                <ul style={s.list}>
+                  {(() => {
+                    const entries = Object.entries(quantities).filter(([, q]) => q > 0);
+                    if (entries.length === 0) return <li>Keine Mengen gew&auml;hlt</li>;
+                    return entries.map(([size, qty], idx) => (
+                      <li key={size} style={listItem(idx === entries.length - 1)}>
+                        <span>{size}</span>
+                        <span style={{ fontWeight: 'bold' }}>{qty}</span>
+                      </li>
+                    ));
+                  })()}
                 </ul>
               )}
             </div>
             <div>
-              <p className="text-xs font-bold text-slate-400 uppercase mb-2">Veredelungen</p>
-              <ul className="space-y-1 font-mono text-sm">
-                {logos.map((logo, idx) => (
-                  <li key={logo.id} className="flex justify-between border-b border-slate-200 last:border-0 py-1">
-                    <span>Logo {idx + 1} (Ansicht {logo.viewIndex + 1})</span>
-                    <span className="font-bold">{logo.refinement}</span>
-                  </li>
-                ))}
-                {logos.length === 0 && <li>Keine Logos platziert</li>}
+              <p style={s.subHeading}>Veredelungen</p>
+              <ul style={s.list}>
+                {logos.length === 0
+                  ? <li>Keine Logos platziert</li>
+                  : logos.map((logo, idx) => (
+                      <li key={logo.id} style={listItem(idx === logos.length - 1)}>
+                        <span>Logo {idx + 1} (Ansicht {logo.viewIndex + 1})</span>
+                        <span style={{ fontWeight: 'bold' }}>{logo.refinement}</span>
+                      </li>
+                    ))
+                }
               </ul>
             </div>
           </div>
@@ -129,30 +337,30 @@ export const PrintableQuote: React.FC<PrintableQuoteProps> = ({
       </div>
 
       {/* Total Section */}
-      <div className="mt-auto border-t-2 border-slate-900 pt-6 page-break-inside-avoid">
-        <div className="flex justify-end">
-          <div className="w-1/2 space-y-3">
-            <div className="flex justify-between text-sm">
-              <span className="text-slate-600">Gesamtmenge Artikel</span>
-              <span className="font-bold">{totalQty} Stk.</span>
+      <div style={s.totalSection}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <div style={{ width: '50%', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div style={s.totalRow}>
+              <span style={{ color: '#475569' }}>Gesamtmenge Artikel</span>
+              <span style={{ fontWeight: 'bold' }}>{totalQty} Stk.</span>
             </div>
             {hasBasePrice && (
-              <div className="flex justify-between items-end pt-2 border-t border-slate-200">
-                <span className="text-slate-900 font-bold">Geschätzter Gesamtpreis</span>
-                <span className="text-2xl font-bold text-emerald-600">
+              <div style={s.totalPriceRow}>
+                <span style={{ color: '#0f172a', fontWeight: 'bold' }}>Gesch&auml;tzter Gesamtpreis</span>
+                <span style={s.totalPriceValue}>
                   {totalPrice.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
                 </span>
               </div>
             )}
             {!hasBasePrice && (
-              <div className="text-right text-sm text-slate-500 italic mt-2">
+              <div style={s.priceOnRequest}>
                 Preis auf Anfrage
               </div>
             )}
           </div>
         </div>
-        <div className="mt-8 text-[10px] text-slate-400 text-center uppercase tracking-wider">
-          Dieses Dokument wurde automatisch generiert. Alle Preise sind unverbindliche Schätzungen zzgl. MwSt.
+        <div style={s.footer}>
+          Dieses Dokument wurde automatisch generiert. Alle Preise sind unverbindliche Sch&auml;tzungen zzgl. MwSt.
         </div>
       </div>
     </div>
