@@ -51,9 +51,14 @@ export const ContactForm: React.FC = () => {
       setSubmitStatus('success');
       setTimeout(() => resetForm(), 3000);
     } catch (error) {
+      console.error('Inquiry submission failed:', error);
       setSubmitStatus('error');
       setErrorMessage(
-        error instanceof Error ? error.message : 'Ein Fehler ist aufgetreten.'
+        error instanceof Error
+          ? error.message
+          : typeof error === 'string'
+            ? error
+            : 'Ein unbekannter Fehler ist aufgetreten.'
       );
     }
   };
