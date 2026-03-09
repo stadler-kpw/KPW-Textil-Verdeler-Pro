@@ -37,7 +37,6 @@ const s: Record<string, React.CSSProperties> = {
     fontSize: '30px',
     lineHeight: '36px',
     fontWeight: 'bold',
-    textTransform: 'uppercase',
     letterSpacing: '-0.025em',
     color: '#0f172a',
     margin: 0,
@@ -53,7 +52,6 @@ const s: Record<string, React.CSSProperties> = {
     lineHeight: '20px',
     fontWeight: 'bold',
     color: '#94a3b8',
-    textTransform: 'uppercase',
     margin: 0,
   },
   datumValue: {
@@ -66,7 +64,6 @@ const s: Record<string, React.CSSProperties> = {
     fontSize: '14px',
     lineHeight: '20px',
     fontWeight: 'bold',
-    textTransform: 'uppercase',
     color: '#64748b',
     marginBottom: '16px',
     borderBottom: '1px solid #e2e8f0',
@@ -89,7 +86,6 @@ const s: Record<string, React.CSSProperties> = {
     lineHeight: '16px',
     fontWeight: 'bold',
     color: '#94a3b8',
-    textTransform: 'uppercase',
   },
   imageContainer: {
     position: 'relative',
@@ -149,7 +145,6 @@ const s: Record<string, React.CSSProperties> = {
     lineHeight: '16px',
     fontWeight: 'bold',
     color: '#94a3b8',
-    textTransform: 'uppercase',
     marginBottom: '8px',
     marginTop: 0,
   },
@@ -207,7 +202,6 @@ const s: Record<string, React.CSSProperties> = {
     fontSize: '10px',
     color: '#94a3b8',
     textAlign: 'center',
-    textTransform: 'uppercase',
     letterSpacing: '0.05em',
   },
 };
@@ -241,18 +235,18 @@ export const PrintableQuote: React.FC<PrintableQuoteProps> = ({
       {/* Header */}
       <div style={s.headerRow}>
         <div>
-          <h1 style={s.title}>Konfiguration</h1>
+          <h1 style={s.title}>KONFIGURATION</h1>
           <p style={s.subtitle}>Veredelungs-Zusammenfassung</p>
         </div>
         <div style={{ textAlign: 'right' }}>
-          <p style={s.datumLabel}>Datum</p>
+          <p style={s.datumLabel}>DATUM</p>
           <p style={s.datumValue}>{dateStr}</p>
         </div>
       </div>
 
       {/* Product & Visuals Grid */}
       <div style={{ marginBottom: '32px' }}>
-        <h3 style={s.sectionHeading}>Visuelle Vorschau</h3>
+        <h3 style={s.sectionHeading}>VISUELLE VORSCHAU</h3>
         <div style={s.grid2Col}>
           {viewsToShow.map(viewIdx => {
             const viewLogos = logos.filter(l => l.viewIndex === viewIdx);
@@ -263,7 +257,7 @@ export const PrintableQuote: React.FC<PrintableQuoteProps> = ({
 
             return (
               <div key={viewIdx} style={s.viewCard}>
-                <span style={s.viewLabel}>Ansicht {viewIdx + 1}</span>
+                <span style={s.viewLabel}>ANSICHT {viewIdx + 1}</span>
                 <div style={{ ...s.imageContainer, aspectRatio: `${aspectRatio}` }}>
                   <img src={viewImage} style={s.productImage} alt="Preview" />
                   <div style={s.logoOverlay}>
@@ -296,11 +290,11 @@ export const PrintableQuote: React.FC<PrintableQuoteProps> = ({
 
       {/* Details Table */}
       <div style={{ marginBottom: '32px', pageBreakInside: 'avoid' }}>
-        <h3 style={s.sectionHeading}>Details & Mengen</h3>
+        <h3 style={s.sectionHeading}>DETAILS & MENGEN</h3>
         <div style={s.detailsCard}>
           <div style={s.grid2Col}>
             <div>
-              <p style={s.subHeading}>Größenaufteilung</p>
+              <p style={s.subHeading}>GRÖSSENAUFTEILUNG</p>
               {isUnsureAboutSizes ? (
                 <p style={s.monoText}>Größen noch unklar / gemischt</p>
               ) : (
@@ -319,7 +313,7 @@ export const PrintableQuote: React.FC<PrintableQuoteProps> = ({
               )}
             </div>
             <div>
-              <p style={s.subHeading}>Veredelungen</p>
+              <p style={s.subHeading}>VEREDELUNGEN</p>
               <ul style={s.list}>
                 {logos.length === 0
                   ? <li>Keine Logos platziert</li>
@@ -360,7 +354,7 @@ export const PrintableQuote: React.FC<PrintableQuoteProps> = ({
           </div>
         </div>
         <div style={s.footer}>
-          Dieses Dokument wurde automatisch generiert. Alle Preise sind unverbindliche Schätzungen zzgl. MwSt.
+          DIESES DOKUMENT WURDE AUTOMATISCH GENERIERT. ALLE PREISE SIND UNVERBINDLICHE SCHÄTZUNGEN ZZGL. MWST.
         </div>
       </div>
     </div>
