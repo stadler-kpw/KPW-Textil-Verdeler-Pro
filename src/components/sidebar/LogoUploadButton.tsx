@@ -1,7 +1,9 @@
 import React, { useRef } from 'react';
 import { Upload } from 'lucide-react';
 import { useConfigStore } from '@/stores/useConfigStore';
-import { MAX_LOGOS } from '@/lib/constants';
+import { MAX_LOGOS, MAX_LOGO_FILE_SIZE } from '@/lib/constants';
+
+const ALLOWED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml'];
 
 export const LogoUploadButton: React.FC = () => {
   const logoInputRef = useRef<HTMLInputElement>(null);
@@ -16,6 +18,16 @@ export const LogoUploadButton: React.FC = () => {
     if (file) {
       if (logos.length >= MAX_LOGOS) {
         alert(`Maximal ${MAX_LOGOS} Logos erlaubt.`);
+        return;
+      }
+      if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+        alert('Bitte nur Bilder im Format PNG, JPG, WebP oder SVG hochladen.');
+        if (logoInputRef.current) logoInputRef.current.value = '';
+        return;
+      }
+      if (file.size > MAX_LOGO_FILE_SIZE) {
+        alert(`Die Datei ist zu groß. Maximale Dateigröße: ${MAX_LOGO_FILE_SIZE / (1024 * 1024)} MB.`);
+        if (logoInputRef.current) logoInputRef.current.value = '';
         return;
       }
       addLogo(file, activeImageIndex);

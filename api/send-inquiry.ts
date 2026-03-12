@@ -28,10 +28,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const { company, name, email, phone, message, pdfBase64 } = req.body as InquiryBody;
 
-    if (!company || !name || !email || !pdfBase64) {
+    if (!company?.trim() || !name?.trim() || !email?.trim() || !pdfBase64) {
       return res.status(400).json({
         success: false,
         message: 'Firma, Name, E-Mail und PDF sind Pflichtfelder.',
+      });
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      return res.status(400).json({
+        success: false,
+        message: 'Bitte geben Sie eine gültige E-Mail-Adresse ein.',
       });
     }
 

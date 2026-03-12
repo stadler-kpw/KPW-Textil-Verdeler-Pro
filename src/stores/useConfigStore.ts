@@ -72,7 +72,7 @@ export const useConfigStore = create<ConfigState & ConfigActions>()(
       addLogo: (file, activeImageIndex) => {
         const url = URL.createObjectURL(file);
         const newLogo: LogoObject = {
-          id: Date.now().toString(),
+          id: crypto.randomUUID(),
           url,
           viewIndex: activeImageIndex,
           x: 40,
@@ -80,7 +80,6 @@ export const useConfigStore = create<ConfigState & ConfigActions>()(
           scale: 1,
           rotation: 0,
           refinement: RefinementType.DRUCK,
-          aiSuggestion: null,
         };
         set((state) => ({
           logos: [...state.logos, newLogo],

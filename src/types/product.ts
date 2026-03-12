@@ -14,5 +14,4 @@ export interface LogoObject {
   scale: number;
   rotation: number;
   refinement: RefinementType;
-  aiSuggestion: string | null;
 }

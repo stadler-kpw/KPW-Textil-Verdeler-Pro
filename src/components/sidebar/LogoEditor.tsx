@@ -1,5 +1,5 @@
 import React from 'react';
-import { Trash2, AlertCircle } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import { useConfigStore } from '@/stores/useConfigStore';
 import { RefinementType } from '@/types';
 
@@ -12,6 +12,7 @@ export const LogoEditor: React.FC = () => {
   const selectedLogo = logos.find(l => l.id === selectedLogoId);
 
   if (!selectedLogo) {
+    if (logos.length === 0) return null;
     return (
       <div className="text-center py-8 text-slate-400 border rounded-xl border-slate-100 bg-slate-50/50">
         <p className="text-sm">Wähle ein Logo auf dem Produkt aus,<br />um die Veredelung einzustellen.</p>
@@ -20,10 +21,10 @@ export const LogoEditor: React.FC = () => {
   }
 
   return (
-    <div className="bg-slate-50 p-4 rounded-xl border border-primary-100 ring-1 ring-primary-100 shadow-sm">
+    <div className="bg-slate-50 p-4 rounded-xl border border-primary-500/20 ring-1 ring-primary-500/20 shadow-sm">
       <div className="flex justify-between items-start mb-4">
         <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-primary-400"></span>
+          <span className="w-2 h-2 rounded-full bg-primary-500"></span>
           Aktuelles Logo bearbeiten
         </h3>
         <button onClick={() => deleteLogo(selectedLogo.id)} className="text-red-400 hover:text-red-600 p-1 hover:bg-red-50 rounded">
@@ -41,11 +42,7 @@ export const LogoEditor: React.FC = () => {
           >
             {Object.values(RefinementType).map(t => <option key={t} value={t}>{t}</option>)}
           </select>
-          {selectedLogo.refinement === RefinementType.STICK && (
-            <p className="text-[10px] text-amber-600 mt-1 flex items-center gap-1">
-              <AlertCircle size={10} /> Mindestbestellmenge bei Stick: 5 Stk.
-            </p>
-          )}
+
         </div>
       </div>
     </div>

@@ -10,6 +10,7 @@ import { usePricing } from '@/hooks/usePricing';
 import { PrintableQuote } from '@/components/print/PrintableQuote';
 import { generateQuotePdf } from '@/services/pdfService';
 import { sendInquiry } from '@/services/inquiryService';
+import { MAX_PDF_SIZE } from '@/lib/constants';
 
 type SubmitStatus = 'idle' | 'generating-pdf' | 'sending' | 'success' | 'error';
 
@@ -40,7 +41,17 @@ export const ContactForm: React.FC<ContactFormProps> = ({ onSuccess }) => {
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
     setErrorMessage(null);
+
+    const trimmedCompany = formData.company.trim();
+    const trimmedName = formData.name.trim();
+    const trimmedEmail = formData.email.trim();
+
+    if (!trimmedCompany || !trimmedName || !trimmedEmail) {
+      setErrorMessage('Bitte füllen Sie alle Pflichtfelder aus.');
+      return;
+    }
 
     try {
       setSubmitStatus('generating-pdf');
@@ -48,6 +59,10 @@ export const ContactForm: React.FC<ContactFormProps> = ({ onSuccess }) => {
       if (!printElement) throw new Error('PDF-Element nicht gefunden');
 
       const pdfBlob = await generateQuotePdf(printElement);
+
+      if (pdfBlob.size > MAX_PDF_SIZE) {
+        throw new Error(`Das PDF ist zu groß (${(pdfBlob.size / (1024 * 1024)).toFixed(1)} MB). Bitte verwenden Sie kleinere Bilder.`);
+      }
 
       setSubmitStatus('sending');
       await sendInquiry(formData, pdfBlob);
@@ -93,28 +108,28 @@ export const ContactForm: React.FC<ContactFormProps> = ({ onSuccess }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-1">
             <label className="text-sm font-medium text-slate-700">Firma</label>
-            <input required className="w-full p-2.5 bg-slate-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-400 outline-none"
+            <input required maxLength={200} className="w-full p-2.5 bg-slate-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-400 outline-none"
               value={formData.company} onChange={e => updateField('company', e.target.value)} />
           </div>
           <div className="space-y-1">
             <label className="text-sm font-medium text-slate-700">Name</label>
-            <input required className="w-full p-2.5 bg-slate-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-400 outline-none"
+            <input required maxLength={200} className="w-full p-2.5 bg-slate-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-400 outline-none"
               value={formData.name} onChange={e => updateField('name', e.target.value)} />
           </div>
           <div className="space-y-1">
             <label className="text-sm font-medium text-slate-700">E-Mail</label>
-            <input required type="email" className="w-full p-2.5 bg-slate-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-400 outline-none"
+            <input required type="email" maxLength={254} className="w-full p-2.5 bg-slate-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-400 outline-none"
               value={formData.email} onChange={e => updateField('email', e.target.value)} />
           </div>
           <div className="space-y-1">
             <label className="text-sm font-medium text-slate-700">Telefon</label>
-            <input className="w-full p-2.5 bg-slate-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-400 outline-none"
+            <input maxLength={30} className="w-full p-2.5 bg-slate-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-400 outline-none"
               value={formData.phone} onChange={e => updateField('phone', e.target.value)} />
           </div>
         </div>
         <div className="space-y-1">
           <label className="text-sm font-medium text-slate-700">Nachricht</label>
-          <textarea rows={4} className="w-full p-2.5 bg-slate-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-400 outline-none"
+          <textarea rows={4} maxLength={2000} className="w-full p-2.5 bg-slate-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-400 outline-none min-h-[100px] max-h-[250px]"
             value={formData.message} onChange={e => updateField('message', e.target.value)} />
         </div>
 

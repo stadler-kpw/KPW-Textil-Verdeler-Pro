@@ -9,7 +9,10 @@ export interface PricingResult {
   totalPrice: number;
   hasBasePrice: boolean;
   hasStick: boolean;
+  hasLogos: boolean;
+  hasQuantity: boolean;
   isMoqValid: boolean;
+  canProceed: boolean;
 }
 
 export function calculatePricing(
@@ -32,7 +35,10 @@ export function calculatePricing(
   const totalPrice = singleItemPrice * totalQty;
 
   const hasStick = logos.some(l => l.refinement === RefinementType.STICK);
+  const hasLogos = logos.length > 0;
+  const hasQuantity = totalQty > 0;
   const isMoqValid = !hasStick || totalQty >= MIN_STICK_QTY;
+  const canProceed = hasLogos && hasQuantity && isMoqValid;
 
   return {
     totalQty,
@@ -41,6 +47,9 @@ export function calculatePricing(
     totalPrice,
     hasBasePrice: basePrice !== null,
     hasStick,
+    hasLogos,
+    hasQuantity,
     isMoqValid,
+    canProceed,
   };
 }
