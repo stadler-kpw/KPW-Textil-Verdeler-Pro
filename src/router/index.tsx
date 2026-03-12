@@ -4,6 +4,7 @@ import { UploadPage } from '@/components/upload/UploadPage';
 import { ConfigPage } from '@/components/config/ConfigPage';
 import { CheckoutPage } from '@/components/checkout/CheckoutPage';
 import { configGuard, checkoutGuard } from './guards';
+import { NotFoundPage } from '@/components/NotFoundPage';
 import { parseDataFromUrl } from '@/lib/url-parser';
 import { useConfigStore } from '@/stores/useConfigStore';
 
@@ -38,6 +39,10 @@ export const router = createBrowserRouter([
         path: 'checkout',
         element: <CheckoutPage />,
         loader: checkoutGuard,
+      },
+      {
+        path: '*',
+        element: <NotFoundPage />,
       },
     ],
   },
